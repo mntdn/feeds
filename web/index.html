@@ -1,0 +1,20 @@
+<!doctype html>
+<html ng-app="feedsApp">
+	<head>
+		<script src="js/angular.min.js"></script>
+		<script src="js/main.js"></script>
+	</head>
+	<body>
+		<div ng-controller="feedsController"> 
+			<ul>
+				<li ng-repeat="feed in feeds">
+					<a href="" ng-click="feedLoad(feed.IdFeed)">{{ feed.Name }}</a>
+				</li>
+			</ul>
+			<div ng-repeat="content in feedContent">
+				<h2>{{content.Title}}</h2>
+				<div ng-bind-html="content.Content"></div>
+			</div>
+		</div>
+	</body>
+</html>
