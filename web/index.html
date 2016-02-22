@@ -3,17 +3,28 @@
 	<head>
 		<script src="js/angular.min.js"></script>
 		<script src="js/main.js"></script>
+		<link rel="stylesheet" type="text/css" href="css/main.css">
 	</head>
 	<body>
 		<div ng-controller="feedsController"> 
-			<ul>
-				<li ng-repeat="feed in feeds">
-					<a href="" ng-click="feedLoad(feed.IdFeed)">{{ feed.Name }}</a>
-				</li>
-			</ul>
-			<div ng-repeat="content in feedContent">
-				<h2>{{content.Title}}</h2>
-				<div ng-bind-html="content.Content"></div>
+			<div class="leftCol">
+				<ul>
+					<li ng-repeat="feed in feeds">
+						<a href="" ng-click="feedLoad(feed.IdFeed)">{{ feed.Name }}</a>
+					</li>
+				</ul>
+			</div>
+			<div class="rightCol">
+				<div class="newsItem" ng-repeat="content in feedContent">
+					<h2 id="news{{content.UniqueID}}"><a id="newsLink{{content.UniqueID}}" href="{{content.Url}}">{{content.Title}}</a></h2>
+					<div ng-bind-html="content.Content"></div>
+				</div>
+			</div>
+			<div class="readLaterCol">
+				<div class="newsLater" ng-repeat="later in laterContent">
+					<h2 id="newsLater{{later.UniqueID}}"><a id="newsLaterLink{{later.UniqueID}}" href="#">{{later.Title}}</a></h2>
+					<iframe ng-src="{{later.Url}}" style="display: none;"></iframe>
+				</div>
 			</div>
 		</div>
 	</body>

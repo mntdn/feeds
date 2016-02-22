@@ -5,6 +5,11 @@ var db = new sqlite.Database('feeds.sqlite');
 
 var table_init = false;
 
+// if some parameters have been passed
+if(process.argv.length > 2) {
+	table_init = process.argv[2] === 'true';
+}
+
 if(table_init){
 	db.serialize(function() {  
 		db.run("DROP TABLE IF EXISTS Feed;");
@@ -15,6 +20,7 @@ if(table_init){
 		var stmt = db.prepare("INSERT INTO Feed VALUES (NULL,?,?)");  
 		stmt.run('http://www.psychologyofgames.com/feed/', 'Psycho');
 		stmt.run('http://feeds2.feedburner.com/IndependentGaming', 'IG');
+		stmt.run('http://boingboing.net/feed', 'BoingBoing');
 		stmt.finalize();  
 	});    
 	db.close();
@@ -24,31 +30,38 @@ if(table_init){
 		rows.forEach(function(feed){
 			console.log(feed.IdFeed, feed.Url, feed.Name);
 			feedRead(feed.Url, function(err, articles){
-				if(err) throw err;
+				if(err) console.log("Erreur feed -- ", err);
 				// var stmt = db.prepare("INSERT INTO FeedContent VALUES (?,?,?,?,?,?)");  
 				// articles.forEach(function(article){
 					// stmt.run(feed.IdFeed, article.published, article.title, article.content, article.link, article.author);
 				// });
 				// stmt.finalize();
 				db.all("SELECT * FROM FeedContent WHERE IdFeed = " + feed.IdFeed + " ORDER BY PublishedDate DESC LIMIT 1", function(e2, content){
-					if(e2) throw e2;
-					console.log("date ",content[0].PublishedDate);
+					if(e2) console.log("Erreur SQL -- ", e2);
 					if(articles.length > 0){
-						// on regarde si l'article le plus récent en base correspond au plus récent dans le fil RSS
-						if(Date.parse(articles[0].published) != content[0].PublishedDate && articles[0].title != content[0].Title){
+						// if there is no article in the DB we download everything 
+						if(	content.length == 0) {
+							console.log(feed.Name, " -- First download of news");
 							var stmt = db.prepare("INSERT INTO FeedContent VALUES (?,?,?,?,?,?)");  
-							// dans ce cas, on n'est pas à jour
-							console.log(feed.Name, "Pas à jour");
+							for(var i = 0; i < articles.length; i++){
+								console.log(articles[i].published + " -- " + articles[i].title);
+								stmt.run(feed.IdFeed, articles[i].published, articles[i].title, articles[i].content, articles[i].link, articles[i].author);
+							}
+							stmt.finalize();  							
+						} else if (content.length > 0 && Date.parse(articles[0].published) != content[0].PublishedDate && articles[0].title != content[0].Title){
+							// if the last one in the DB is not the same as the last one online, we update
+							console.log(feed.Name, " -- Not up to date");
+							var stmt = db.prepare("INSERT INTO FeedContent VALUES (?,?,?,?,?,?)");  
 							stmt.run(feed.IdFeed, articles[0].published, articles[0].title, articles[0].content, articles[0].link, articles[0].author);
 							var i = 1;
 							while(articles.length > i && Date.parse(articles[i].published) != content[0].PublishedDate && articles[i].title != content[0].Title){
-								console.log(articles[i].published + " -- " + content[0].PublishedDate);
+								console.log(articles[i].published + " -- " + articles[i].title);
 								stmt.run(feed.IdFeed, articles[i].published, articles[i].title, articles[i].content, articles[i].link, articles[i].author);
 								i++;							
 							}
 							stmt.finalize();  
 						} else {
-							console.log(feed.Name, "A jour");
+							console.log(feed.Name, " -- Up to date");
 						}
 					}
 				});
