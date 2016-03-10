@@ -59,7 +59,7 @@ if(table_init){
 							var i = 1;
 							while(articles.length > i && Date.parse(articles[i].published) != content[0].PublishedDate && articles[i].title != content[0].Title){
 								console.log(articles[i].published + " -- " + articles[i].title);
-								stmt.run(feed.IdFeed, articles[i].published, articles[i].title, articles[i].content, articles[i].link, articles[i].author,0,0);
+								stmt.run(feed.IdFeed, articles[i].published, articles[i].title, articles[i].content, articles[i].link, articles[i].author);
 								i++;							
 							}
 							stmt.finalize();  
