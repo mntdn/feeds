@@ -10,20 +10,23 @@
 			<div class="leftCol">
 				<ul>
 					<li ng-repeat="feed in feeds">
-						<a href="" ng-click="feedLoad(feed.IdFeed)">{{ feed.Name }}</a>
+						<a href="" ng-click="feedLoad(feed.IdFeed)">{{ feed.Name }} ({{ feed.NbItems }})</a>
 					</li>
 				</ul>
 			</div>
-			<div class="rightCol">
-				<div class="newsItem" ng-repeat="content in feedContent">
-					<h2 id="news{{content.UniqueID}}"><a id="newsLink{{content.UniqueID}}" href="{{content.Url}}">{{content.Title}}</a></h2>
-					<div ng-bind-html="content.Content"></div>
+			<div class="centerCol">
+				<div class="newsItem {{classWhenRead(content)}}" id="newsItem{{content.IdFeedContent}}" ng-repeat="content in feedContent">
+					<div class="newsHeader">
+						<span class="read {{getState(content.IsRead)}}" ng-click="postRead(content, 1)">R</span>&nbsp;
+						<span class="saved {{getState(content.IsSaved)}}" ng-click="postSave(content, 1)">S</span>
+						<h2 id="news{{content.IdFeedContent}}"><a id="newsLink{{content.IdFeedContent}}" href="{{content.Url}}">{{content.Title}}</a></h2>
+					</div>					
+					<div class="newsContent" ng-bind-html="content.Content"></div>
 				</div>
 			</div>
 			<div class="readLaterCol">
 				<div class="newsLater" ng-repeat="later in laterContent">
-					<h2 id="newsLater{{later.UniqueID}}"><a id="newsLaterLink{{later.UniqueID}}" href="#">{{later.Title}}</a></h2>
-					<iframe ng-src="{{later.Url}}" style="display: none;"></iframe>
+					<h2 id="newsLater{{later.IdFeedContent}}"><a id="newsLaterLink{{later.IdFeedContent}}" href="{{later.Url}}">{{later.Title}}</a></h2>
 				</div>
 			</div>
 		</div>

@@ -14,8 +14,11 @@ if(table_init){
 	db.serialize(function() {  
 		db.run("DROP TABLE IF EXISTS Feed;");
 		db.run("DROP TABLE IF EXISTS FeedContent;");
+		db.run("CREATE TABLE IF NOT EXISTS User(IdUser INTEGER PRIMARY KEY, Name TEXT);");
 		db.run("CREATE TABLE IF NOT EXISTS Feed(IdFeed INTEGER PRIMARY KEY, Url TEXT, Name TEXT); ");
-		db.run("CREATE TABLE IF NOT EXISTS FeedContent(IdFeed INTEGER, PublishedDate INTEGER, Title TEXT, Content TEXT, Url TEXT, Author TEXT);");  
+		db.run("CREATE TABLE IF NOT EXISTS UserFeed(IdUser INTEGER, IdFeed INTEGER, FOREIGN KEY(IdUser) REFERENCES User(IdUser), FOREIGN KEY(IdFeed) REFERENCES Feed(IdFeed));");
+		db.run("CREATE TABLE IF NOT EXISTS FeedContent(IdFeedContent INTEGER PRIMARY KEY, IdFeed INTEGER, PublishedDate INTEGER, Title TEXT, Content TEXT, Url TEXT, Author TEXT, FOREIGN KEY(IdFeed) REFERENCES Feed(IdFeed));");  
+		db.run("CREATE TABLE IF NOT EXISTS UserFeedContent(IdUser INTEGER, IdFeedContent INTEGER, IsRead INTEGER, IsSaved INTEGER, FOREIGN KEY(IdUser) REFERENCES User(IdUser), FOREIGN KEY(IdFeedContent) REFERENCES FeedContent(IdFeedContent), UNIQUE(IdUser, IdFeedContent));");
 
 		var stmt = db.prepare("INSERT INTO Feed VALUES (NULL,?,?)");  
 		stmt.run('http://www.psychologyofgames.com/feed/', 'Psycho');
@@ -42,21 +45,21 @@ if(table_init){
 						// if there is no article in the DB we download everything 
 						if(	content.length == 0) {
 							console.log(feed.Name, " -- First download of news");
-							var stmt = db.prepare("INSERT INTO FeedContent VALUES (?,?,?,?,?,?)");  
+							var stmt = db.prepare("INSERT INTO FeedContent VALUES (?,?,?,?,?,?,?,?)");  
 							for(var i = 0; i < articles.length; i++){
 								console.log(articles[i].published + " -- " + articles[i].title);
-								stmt.run(feed.IdFeed, articles[i].published, articles[i].title, articles[i].content, articles[i].link, articles[i].author);
+								stmt.run(feed.IdFeed, articles[i].published, articles[i].title, articles[i].content, articles[i].link, articles[i].author,0,0);
 							}
 							stmt.finalize();  							
 						} else if (content.length > 0 && Date.parse(articles[0].published) != content[0].PublishedDate && articles[0].title != content[0].Title){
 							// if the last one in the DB is not the same as the last one online, we update
 							console.log(feed.Name, " -- Not up to date");
-							var stmt = db.prepare("INSERT INTO FeedContent VALUES (?,?,?,?,?,?)");  
-							stmt.run(feed.IdFeed, articles[0].published, articles[0].title, articles[0].content, articles[0].link, articles[0].author);
+							var stmt = db.prepare("INSERT INTO FeedContent VALUES (?,?,?,?,?,?,?,?)");  
+							stmt.run(feed.IdFeed, articles[0].published, articles[0].title, articles[0].content, articles[0].link, articles[0].author,0,0);
 							var i = 1;
 							while(articles.length > i && Date.parse(articles[i].published) != content[0].PublishedDate && articles[i].title != content[0].Title){
 								console.log(articles[i].published + " -- " + articles[i].title);
-								stmt.run(feed.IdFeed, articles[i].published, articles[i].title, articles[i].content, articles[i].link, articles[i].author);
+								stmt.run(feed.IdFeed, articles[i].published, articles[i].title, articles[i].content, articles[i].link, articles[i].author,0,0);
 								i++;							
 							}
 							stmt.finalize();  
