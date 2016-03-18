@@ -2,12 +2,19 @@
 <html ng-app="feedsApp">
 	<head>
 		<script src="js/angular.min.js"></script>
+		<script src="js/angular-animate.min.js"></script>
+		<!-- <script src="js/angular-aria.min.js"></script>
+		<script src="js/angular-messages.min.js"></script>
+		<script src="js/angular-material.min.js"></script> -->
 		<script src="js/main.js"></script>
 		<link rel="stylesheet" type="text/css" href="css/main.css">
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+		<!-- <link rel="stylesheet" href="css/angular-material.min.css"> -->
 	</head>
 	<body>
-		<div ng-controller="feedsController"> 
+		<div ng-controller="feedsController" class="{{activateMainClass}}"> 
 			<div class="leftCol">
+				<i class="fa fa-cog fa-lg" ng-click="openDialog()"></i> {{currentUser}}
 				<ul>
 					<li ng-repeat="feed in feeds">
 						<a href="" ng-click="feedLoad(feed.IdFeed)">{{ feed.Name }} ({{ feed.NbItems }})</a>
@@ -15,10 +22,11 @@
 				</ul>
 			</div>
 			<div class="centerCol">
-				<div class="newsItem {{classWhenRead(content)}}" id="newsItem{{content.IdFeedContent}}" ng-repeat="content in feedContent">
+				<div class="feedActionHeader" ng-show="showHeader()"><a href="" ng-click="readAll()">Read all</a> | <a href="" ng-click="unreadAll()">Unread all</a></div>
+				<div class="newsItem {{classWhenRead(content)}} {{classWhenActive(content)}}" id="newsItem{{content.IdFeedContent}}" ng-repeat="content in feedContent">
 					<div class="newsHeader">
-						<span class="read {{getState(content.IsRead)}}" ng-click="postRead(content, 1)">R</span>&nbsp;
-						<span class="saved {{getState(content.IsSaved)}}" ng-click="postSave(content, 1)">S</span>
+						<i class="fa fa-check-square{{getState(content.IsRead)}}" ng-click="postRead(content, 1)"></i>&nbsp;
+						<i class="fa fa-bookmark{{getState(content.IsSaved)}}" ng-click="postSave(content, 1)"></i>
 						<h2 id="news{{content.IdFeedContent}}"><a id="newsLink{{content.IdFeedContent}}" href="{{content.Url}}">{{content.Title}}</a></h2>
 					</div>					
 					<div class="newsContent" ng-bind-html="content.Content"></div>
@@ -29,6 +37,15 @@
 					<h2 id="newsLater{{later.IdFeedContent}}"><a id="newsLaterLink{{later.IdFeedContent}}" href="{{later.Url}}">{{later.Title}}</a></h2>
 				</div>
 			</div>
+		</div>
+		
+		<div ng-controller="setupController" class="setupDialog {{classShow}}">
+			<div class="dialogHead">Configuration <i class="fa fa-times" style="float: right; cursor: pointer;" ng-click="closeDialog()"></i></div>
+			<ul>
+				<li ng-repeat="feed in feeds">
+					<i class="fa fa-{{addOrRemove(feed)}}-circle" ng-click="feedChangeSubscription(feed)"></i><a href="">{{ feed.Name }}</a>
+				</li>
+			</ul>
 		</div>
 	</body>
 </html>

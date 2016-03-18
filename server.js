@@ -6,6 +6,21 @@ var app = express();
 // Tous les fichiers seront servis depuis le répertoire web
 app.use(express.static('web'));
 
+app.get('/allFeedsList', function (req, res) {
+	console.log("allFeedsList GET ", req.query);
+	db.all("SELECT \
+		F.IdFeed, \
+		F.Name, \
+		CASE WHEN UF.IdUser IS NULL THEN 0 ELSE 1 END IsSubscribed \
+	FROM User U \
+		CROSS JOIN Feed F  \
+		LEFT OUTER JOIN UserFeed UF ON UF.IdUser = U.IdUser AND UF.IdFeed = F.IdFeed \
+	WHERE U.Name='" + req.query.user + "'", function(e,rows){
+		if(e) throw e;
+		res.json(rows);
+	});
+})
+
 app.get('/feedsList', function (req, res) {
 	console.log("feedsList GET ", req.query);
 	db.all("SELECT \
@@ -44,7 +59,9 @@ app.get('/toReadLaterList', function (req, res) {
 
 app.get('/feedContent', function (req, res) {
 	console.log("feedContent GET", req.query);
-	db.all("SELECT FC.IdFeedContent, FC.Content, FC.PublishedDate, FC.Title, FC.Url, UFC.IsRead, UFC.IsSaved \
+	db.all("SELECT FC.IdFeedContent, FC.Content, FC.PublishedDate, FC.Title, FC.Url, \
+			CASE WHEN UFC.IsRead IS NULL THEN 0 ELSE UFC.IsRead END IsRead, \
+			CASE WHEN UFC.IsSaved IS NULL THEN 0 ELSE UFC.IsSaved END IsSaved \
 		FROM User U \
 			INNER JOIN UserFeed UF ON UF.IdUser = U.IdUser AND UF.IdFeed ="+req.query.id+" \
 			INNER JOIN FeedContent FC ON FC.IdFeed = UF.IdFeed \
@@ -54,6 +71,53 @@ app.get('/feedContent', function (req, res) {
 		if(e) throw e;
 		res.json(rows);
 	});
+})
+
+app.post('/subscribeToFeed', function (req, res) {
+	console.log("subscribeToFeed POST", req.query);
+	db.serialize(function() {
+		db.run("INSERT OR IGNORE INTO UserFeed (IdUser, IdFeed) \
+			SELECT U.IdUser, "+ req.query.IdFeed +" \
+			FROM User U \
+			WHERE Name LIKE '"+ req.query.user +"';");
+	});
+	res.json("OK");
+})
+
+app.post('/unsubscribeFromFeed', function (req, res) {
+	console.log("unsubscribeFromFeed POST", req.query);
+	db.serialize(function() {
+		db.run("DELETE FROM UserFeed \
+			WHERE IdUser = (SELECT IdUser FROM User WHERE Name LIKE '"+ req.query.user +"') \
+				AND IdFeed = " + req.query.IdFeed);
+	});
+	res.json("OK");
+})
+
+app.post('/markAllRead', function (req, res) {
+	console.log("markAllRead POST", req.query);
+	db.serialize(function() {
+		// TODO : n'insérer que les posts que l'utilisateur n'a pas déjà lu
+		db.run("INSERT OR IGNORE INTO UserFeedContent (IdUser, IdFeedContent, IsRead) \
+			SELECT U.IdUser, FC.IdFeedContent, 1 \
+			FROM User U \
+				INNER JOIN FeedContent FC ON FC.IdFeed = "+ req.query.IdFeed +" \
+			WHERE Name LIKE '"+ req.query.user +"';");
+		db.run("UPDATE UserFeedContent SET IsRead = 1 \
+			WHERE IdUser = (SELECT IdUser FROM User WHERE Name LIKE '"+ req.query.user +"') \
+				AND IdFeedContent IN (SELECT IdFeedContent FROM FeedContent WHERE IdFeed = '"+ req.query.IdFeed +"')");
+	});
+	res.json("OK");
+})
+
+app.post('/markAllUnread', function (req, res) {
+	console.log("markAllUnread POST", req.query);
+	db.serialize(function() {
+		db.run("DELETE FROM UserFeedContent \
+			WHERE IdUser = (SELECT IdUser FROM User WHERE Name LIKE '"+ req.query.user +"') \
+				AND IdFeedContent IN (SELECT IdFeedContent FROM FeedContent WHERE IdFeed = '"+ req.query.IdFeed +"')");
+	});
+	res.json("OK");
 })
 
 app.post('/changeRead', function (req, res) {
