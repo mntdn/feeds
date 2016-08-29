@@ -1,0 +1,31 @@
+{
+  "name": "feeds",
+  "version": "1.0.0",
+  "description": "Retrieve and read your favorite feeds",
+  "main": "server.js",
+  "dependencies": {
+    "express": "^4.13.3",
+    "feed-read": "^0.0.1",
+    "sqlite3": "^3.1.4"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "node server.js",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mntdn/feeds.git"
+  },
+  "keywords": [
+    "RSS",
+    "feed",
+    "reader"
+  ],
+  "author": "Matthieu Montaudouin",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mntdn/feeds/issues"
+  },
+  "homepage": "https://github.com/mntdn/feeds#readme"
+}
