@@ -3,15 +3,46 @@ var sqlite = require("sqlite3");
 var db = new sqlite.Database('feeds.sqlite');
 var app = express();
 
+
 // Tous les fichiers seront servis depuis le répertoire web
 app.use(express.static('web'));
+// app.use(express.json());
+
+app.post('/addFeed', function (req, res) {
+	console.log("addFeed POST ", req.query);
+	db.serialize(function() {
+		db.run("INSERT INTO Feed (Url, Name) \
+				VALUES ('"+ req.query.Url +"', '"+ req.query.Name +"');");
+		db.all("SELECT * FROM Feed WHERE IdFeed = last_insert_rowid();", function(e,rows){
+			if(e) throw e;
+			res.json(rows);
+		});
+	});
+})
+
+app.post('/editFeed', function (req, res) {
+	console.log("editFeed POST ", req.query);
+	db.serialize(function() {
+		db.run("UPDATE Feed SET Url = '"+ req.query.Url +"', Name = '"+ req.query.Name +"' WHERE IdFeed = "+ req.query.IdFeed +";");
+	});
+})
+
+app.post('/deleteFeed', function (req, res) {
+	console.log("deleteFeed POST ", req.query);
+	db.serialize(function() {
+		db.run("DELETE FROM Feed WHERE IdFeed = "+ req.query.IdFeed +";");
+	});
+	res.json('ok');
+})
 
 app.get('/allFeedsList', function (req, res) {
 	console.log("allFeedsList GET ", req.query);
 	db.all("SELECT \
 		F.IdFeed, \
 		F.Name, \
-		CASE WHEN UF.IdUser IS NULL THEN 0 ELSE 1 END IsSubscribed \
+		F.Url, \
+		CASE WHEN UF.IdUser IS NULL THEN 0 ELSE 1 END IsSubscribed, \
+		0 IsShown \
 	FROM User U \
 		CROSS JOIN Feed F  \
 		LEFT OUTER JOIN UserFeed UF ON UF.IdUser = U.IdUser AND UF.IdFeed = F.IdFeed \
@@ -47,7 +78,9 @@ app.get('/feedsList', function (req, res) {
 app.get('/toReadLaterList', function (req, res) {
 	console.log("toReadLaterList GET ", req.query);
 	db.all("SELECT \
-		FC.IdFeedContent, FC.Title, FC.Url \
+		FC.IdFeedContent, FC.Content, FC.PublishedDate, FC.Title, FC.Url, \
+		CASE WHEN UFC.IsRead IS NULL THEN 0 ELSE UFC.IsRead END IsRead, \
+		CASE WHEN UFC.IsSaved IS NULL THEN 0 ELSE UFC.IsSaved END IsSaved \
 	FROM User U \
 		INNER JOIN UserFeedContent UFC ON UFC.IdUser = U.IdUser AND UFC.IsSaved = 1 \
 		INNER JOIN FeedContent FC ON FC.IdFeedContent = UFC.IdFeedContent \

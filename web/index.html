@@ -15,11 +15,12 @@
 		<div ng-controller="feedsController" class="{{activateMainClass}}"> 
 			<div class="leftCol">
 				<i class="fa fa-cog fa-lg" ng-click="openDialog()"></i> {{currentUser}}
-				<ul>
-					<li ng-repeat="feed in feeds">
+				<ul class="feedList">
+					<li ng-repeat="feed in feeds" class="{{classWhenActive(feed)}}">
 						<a href="" ng-click="feedLoad(feed.IdFeed)">{{ feed.Name }} ({{ feed.NbItems }})</a>
 					</li>
 				</ul>
+				<a href="" ng-click="loadSaved()">Saved items</a>
 			</div>
 			<div class="centerCol">
 				<div class="feedActionHeader" ng-show="showHeader()"><a href="" ng-click="readAll()">Read all</a> | <a href="" ng-click="unreadAll()">Unread all</a></div>
@@ -41,9 +42,18 @@
 		
 		<div ng-controller="setupController" class="setupDialog {{classShow}}">
 			<div class="dialogHead">Configuration <i class="fa fa-times" style="float: right; cursor: pointer;" ng-click="closeDialog()"></i></div>
+			<input type="hidden" value="{{currentFeedId}}" />
+			URL <input type="text" ng-model="feedToAddUrl" placeholder="URL du feed"> 
+			Nom <input type="text" ng-model="feedToAddName" placeholder="Nom du feed"> <i class="fa fa-plus" ng-click="addFeed()"></i>
 			<ul>
 				<li ng-repeat="feed in feeds">
-					<i class="fa fa-{{addOrRemove(feed)}}-circle" ng-click="feedChangeSubscription(feed)"></i><a href="">{{ feed.Name }}</a>
+					<i class="fa fa-{{addOrRemove(feed)}}-circle" ng-click="feedChangeSubscription(feed)"></i><a href="" ng-click="showFeed(feed)">{{ feed.Name }}</a>
+					<div ng-show="feed.IsShown">
+						URL <input type="text" ng-model="feed.Url"> 
+						Nom <input type="text" ng-model="feed.Name"> 
+						<i class="fa fa-pencil" ng-click="editFeed(feed)"></i>
+						<i class="fa fa-trash" ng-click="deleteFeed(feed)"></i>
+					</div>
 				</li>
 			</ul>
 		</div>

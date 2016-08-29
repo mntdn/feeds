@@ -59,6 +59,20 @@ body{
 	text-align: right;
 }
 
+ul.feedList {
+	list-style: none;
+}
+
+.feedList li a {
+	text-decoration: none;
+	color: black;
+}
+
+.feedList li:hover {
+	background-color: #ddd;
+	color: black;
+}
+
 .newsItem {
 	width: 650px;
 	margin: 6px auto;
