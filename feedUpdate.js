@@ -30,8 +30,8 @@ if(table_init){
 } else {
 	db.all("SELECT * FROM Feed", function(e,rows){
 		if(e) throw e;
+		console.log(new Date + " update");
 		rows.forEach(function(feed){
-			console.log(feed.IdFeed, feed.Url, feed.Name);
 			feedRead(feed.Url, function(err, articles){
 				if(err) console.log("Erreur feed -- ", err);
 				// var stmt = db.prepare("INSERT INTO FeedContent VALUES (?,?,?,?,?,?)");  
@@ -44,27 +44,27 @@ if(table_init){
 					if(articles.length > 0){
 						// if there is no article in the DB we download everything 
 						if(	content.length == 0) {
-							console.log(feed.Name, " -- First download of news");
+							console.log(feed.IdFeed, feed.Name, " -- First download of news");
 							var stmt = db.prepare("INSERT INTO FeedContent(IdFeed, PublishedDate, Title, Content, Url, Author) VALUES (?,?,?,?,?,?)");  
 							for(var i = 0; i < articles.length; i++){
-								console.log(articles[i].published + " -- " + articles[i].title);
+								console.log("\t" + articles[i].published + " -- " + articles[i].title);
 								stmt.run(feed.IdFeed, articles[i].published, articles[i].title, articles[i].content, articles[i].link, articles[i].author);
 							}
 							stmt.finalize();  							
 						} else if (content.length > 0 && Date.parse(articles[0].published) != content[0].PublishedDate && articles[0].title != content[0].Title){
 							// if the last one in the DB is not the same as the last one online, we update
-							console.log(feed.Name, " -- Not up to date");
+							console.log(feed.IdFeed, feed.Name, " -- Not up to date");
 							var stmt = db.prepare("INSERT INTO FeedContent(IdFeed, PublishedDate, Title, Content, Url, Author) VALUES (?,?,?,?,?,?)");  
 							stmt.run(feed.IdFeed, articles[0].published, articles[0].title, articles[0].content, articles[0].link, articles[0].author);
 							var i = 1;
 							while(articles.length > i && Date.parse(articles[i].published) != content[0].PublishedDate && articles[i].title != content[0].Title){
-								console.log(articles[i].published + " -- " + articles[i].title);
+								console.log("\t" + articles[i].published + " -- " + articles[i].title);
 								stmt.run(feed.IdFeed, articles[i].published, articles[i].title, articles[i].content, articles[i].link, articles[i].author);
 								i++;							
 							}
 							stmt.finalize();  
 						} else {
-							console.log(feed.Name, " -- Up to date");
+							console.log(feed.IdFeed, feed.Name, " -- Up to date");
 						}
 					}
 				});

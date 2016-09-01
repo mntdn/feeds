@@ -29,6 +29,7 @@
 						<i class="fa fa-check-square{{getState(content.IsRead)}}" ng-click="postRead(content, 1)"></i>&nbsp;
 						<i class="fa fa-bookmark{{getState(content.IsSaved)}}" ng-click="postSave(content, 1)"></i>
 						<h2 id="news{{content.IdFeedContent}}"><a id="newsLink{{content.IdFeedContent}}" href="{{content.Url}}">{{content.Title}}</a></h2>
+						<h3>{{content.PublishedDate | date:'dd/MM/yyyy H:mm:ss'}} -- {{content.Author}}</h3>
 					</div>					
 					<div class="newsContent" ng-bind-html="content.Content"></div>
 				</div>

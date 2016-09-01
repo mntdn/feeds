@@ -9,7 +9,7 @@ app.use(express.static('web'));
 // app.use(express.json());
 
 app.post('/addFeed', function (req, res) {
-	console.log("addFeed POST ", req.query);
+	console.log(new Date(), "addFeed POST ", req.query);
 	db.serialize(function() {
 		db.run("INSERT INTO Feed (Url, Name) \
 				VALUES ('"+ req.query.Url +"', '"+ req.query.Name +"');");
@@ -21,14 +21,14 @@ app.post('/addFeed', function (req, res) {
 })
 
 app.post('/editFeed', function (req, res) {
-	console.log("editFeed POST ", req.query);
+	console.log(new Date(), "editFeed POST ", req.query);
 	db.serialize(function() {
 		db.run("UPDATE Feed SET Url = '"+ req.query.Url +"', Name = '"+ req.query.Name +"' WHERE IdFeed = "+ req.query.IdFeed +";");
 	});
 })
 
 app.post('/deleteFeed', function (req, res) {
-	console.log("deleteFeed POST ", req.query);
+	console.log(new Date(), "deleteFeed POST ", req.query);
 	db.serialize(function() {
 		db.run("DELETE FROM Feed WHERE IdFeed = "+ req.query.IdFeed +";");
 	});
@@ -36,7 +36,7 @@ app.post('/deleteFeed', function (req, res) {
 })
 
 app.get('/allFeedsList', function (req, res) {
-	console.log("allFeedsList GET ", req.query);
+	console.log(new Date(), "allFeedsList GET ", req.query);
 	db.all("SELECT \
 		F.IdFeed, \
 		F.Name, \
@@ -53,7 +53,7 @@ app.get('/allFeedsList', function (req, res) {
 })
 
 app.get('/feedsList', function (req, res) {
-	console.log("feedsList GET ", req.query);
+	console.log(new Date(), "feedsList GET ", req.query);
 	db.all("SELECT \
 		F.IdFeed, \
 		F.Name, \
@@ -76,7 +76,7 @@ app.get('/feedsList', function (req, res) {
 })
 
 app.get('/toReadLaterList', function (req, res) {
-	console.log("toReadLaterList GET ", req.query);
+	console.log(new Date(), "toReadLaterList GET ", req.query);
 	db.all("SELECT \
 		FC.IdFeedContent, FC.Content, FC.PublishedDate, FC.Title, FC.Url, \
 		CASE WHEN UFC.IsRead IS NULL THEN 0 ELSE UFC.IsRead END IsRead, \
@@ -91,8 +91,8 @@ app.get('/toReadLaterList', function (req, res) {
 })
 
 app.get('/feedContent', function (req, res) {
-	console.log("feedContent GET", req.query);
-	db.all("SELECT FC.IdFeedContent, FC.Content, FC.PublishedDate, FC.Title, FC.Url, \
+	console.log(new Date(), "feedContent GET", req.query);
+	db.all("SELECT FC.IdFeedContent, FC.Content, FC.PublishedDate, FC.Title, FC.Url, FC.Author, \
 			CASE WHEN UFC.IsRead IS NULL THEN 0 ELSE UFC.IsRead END IsRead, \
 			CASE WHEN UFC.IsSaved IS NULL THEN 0 ELSE UFC.IsSaved END IsSaved \
 		FROM User U \
@@ -107,7 +107,7 @@ app.get('/feedContent', function (req, res) {
 })
 
 app.post('/subscribeToFeed', function (req, res) {
-	console.log("subscribeToFeed POST", req.query);
+	console.log(new Date(), "subscribeToFeed POST", req.query);
 	db.serialize(function() {
 		db.run("INSERT OR IGNORE INTO UserFeed (IdUser, IdFeed) \
 			SELECT U.IdUser, "+ req.query.IdFeed +" \
@@ -118,7 +118,7 @@ app.post('/subscribeToFeed', function (req, res) {
 })
 
 app.post('/unsubscribeFromFeed', function (req, res) {
-	console.log("unsubscribeFromFeed POST", req.query);
+	console.log(new Date(), "unsubscribeFromFeed POST", req.query);
 	db.serialize(function() {
 		db.run("DELETE FROM UserFeed \
 			WHERE IdUser = (SELECT IdUser FROM User WHERE Name LIKE '"+ req.query.user +"') \
@@ -128,7 +128,7 @@ app.post('/unsubscribeFromFeed', function (req, res) {
 })
 
 app.post('/markAllRead', function (req, res) {
-	console.log("markAllRead POST", req.query);
+	console.log(new Date(), "markAllRead POST", req.query);
 	db.serialize(function() {
 		// TODO : n'insérer que les posts que l'utilisateur n'a pas déjà lu
 		db.run("INSERT OR IGNORE INTO UserFeedContent (IdUser, IdFeedContent, IsRead) \
@@ -144,7 +144,7 @@ app.post('/markAllRead', function (req, res) {
 })
 
 app.post('/markAllUnread', function (req, res) {
-	console.log("markAllUnread POST", req.query);
+	console.log(new Date(), "markAllUnread POST", req.query);
 	db.serialize(function() {
 		db.run("DELETE FROM UserFeedContent \
 			WHERE IdUser = (SELECT IdUser FROM User WHERE Name LIKE '"+ req.query.user +"') \
@@ -154,7 +154,7 @@ app.post('/markAllUnread', function (req, res) {
 })
 
 app.post('/changeRead', function (req, res) {
-	console.log("changeRead POST", req.query);
+	console.log(new Date(), "changeRead POST", req.query);
 	db.serialize(function() {
 		db.run("INSERT OR IGNORE INTO UserFeedContent (IdUser, IdFeedContent, IsRead) \
 			SELECT U.IdUser, "+ req.query.IdFC +", "+ req.query.read +" \
@@ -167,7 +167,7 @@ app.post('/changeRead', function (req, res) {
 })
 
 app.post('/changeSaved', function (req, res) {
-	console.log("changeSaved POST", req.query);
+	console.log(new Date(), "changeSaved POST", req.query);
 	db.serialize(function() {
 		db.run("INSERT OR IGNORE INTO UserFeedContent (IdUser, IdFeedContent, IsSaved) \
 			SELECT U.IdUser, "+ req.query.IdFC +", "+ req.query.save +" \
