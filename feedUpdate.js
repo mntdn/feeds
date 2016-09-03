@@ -11,21 +11,26 @@ if(process.argv.length > 2) {
 }
 
 if(table_init){
-	db.serialize(function() {  
+	db.serialize(function() {
 		db.run("DROP TABLE IF EXISTS Feed;");
 		db.run("DROP TABLE IF EXISTS FeedContent;");
 		db.run("CREATE TABLE IF NOT EXISTS User(IdUser INTEGER PRIMARY KEY, Name TEXT);");
 		db.run("CREATE TABLE IF NOT EXISTS Feed(IdFeed INTEGER PRIMARY KEY, Url TEXT, Name TEXT); ");
-		db.run("CREATE TABLE IF NOT EXISTS UserFeed(IdUser INTEGER, IdFeed INTEGER, FOREIGN KEY(IdUser) REFERENCES User(IdUser), FOREIGN KEY(IdFeed) REFERENCES Feed(IdFeed), UNIQUE(IdUser, IdFeed));");
-		db.run("CREATE TABLE IF NOT EXISTS FeedContent(IdFeedContent INTEGER PRIMARY KEY, IdFeed INTEGER, PublishedDate INTEGER, Title TEXT, Content TEXT, Url TEXT, Author TEXT, FOREIGN KEY(IdFeed) REFERENCES Feed(IdFeed));");  
+		db.run("CREATE TABLE IF NOT EXISTS Category(IdCategory INTEGER PRIMARY KEY, Name TEXT, IdUser INTEGER, FOREIGN KEY(IdUser) REFERENCES User(IdUser)); ");
+		db.run("CREATE TABLE IF NOT EXISTS UserFeed(IdUser INTEGER, IdFeed INTEGER, IdCategory INTEGER, FOREIGN KEY(IdUser) REFERENCES User(IdUser), FOREIGN KEY(IdFeed) REFERENCES Feed(IdFeed), FOREIGN KEY(IdCategory) REFERENCES Category(IdCategory), UNIQUE(IdUser, IdFeed));");
+		db.run("CREATE TABLE IF NOT EXISTS FeedContent(IdFeedContent INTEGER PRIMARY KEY, IdFeed INTEGER, PublishedDate INTEGER, Title TEXT, Content TEXT, Url TEXT, Author TEXT, FOREIGN KEY(IdFeed) REFERENCES Feed(IdFeed));");
 		db.run("CREATE TABLE IF NOT EXISTS UserFeedContent(IdUser INTEGER, IdFeedContent INTEGER, IsRead INTEGER, IsSaved INTEGER, FOREIGN KEY(IdUser) REFERENCES User(IdUser), FOREIGN KEY(IdFeedContent) REFERENCES FeedContent(IdFeedContent), UNIQUE(IdUser, IdFeedContent));");
 
-		var stmt = db.prepare("INSERT INTO Feed VALUES (NULL,?,?)");  
+		var stmt = db.prepare("INSERT INTO Feed VALUES (NULL,?,?)");
 		stmt.run('http://www.psychologyofgames.com/feed/', 'Psycho');
 		stmt.run('http://feeds2.feedburner.com/IndependentGaming', 'IG');
 		stmt.run('http://boingboing.net/feed', 'BoingBoing');
-		stmt.finalize();  
-	});    
+		stmt.finalize();
+
+		var stmt = db.prepare("INSERT INTO User VALUES (NULL,?)");
+		stmt.run('mat');
+		stmt.finalize();
+	});
 	db.close();
 } else {
 	db.all("SELECT * FROM Feed", function(e,rows){
@@ -34,7 +39,7 @@ if(table_init){
 		rows.forEach(function(feed){
 			feedRead(feed.Url, function(err, articles){
 				if(err) console.log("Erreur feed -- ", err);
-				// var stmt = db.prepare("INSERT INTO FeedContent VALUES (?,?,?,?,?,?)");  
+				// var stmt = db.prepare("INSERT INTO FeedContent VALUES (?,?,?,?,?,?)");
 				// articles.forEach(function(article){
 					// stmt.run(feed.IdFeed, article.published, article.title, article.content, article.link, article.author);
 				// });
@@ -42,27 +47,27 @@ if(table_init){
 				db.all("SELECT * FROM FeedContent WHERE IdFeed = " + feed.IdFeed + " ORDER BY PublishedDate DESC LIMIT 1", function(e2, content){
 					if(e2) console.log("Erreur SQL -- ", e2);
 					if(articles.length > 0){
-						// if there is no article in the DB we download everything 
+						// if there is no article in the DB we download everything
 						if(	content.length == 0) {
 							console.log(feed.IdFeed, feed.Name, " -- First download of news");
-							var stmt = db.prepare("INSERT INTO FeedContent(IdFeed, PublishedDate, Title, Content, Url, Author) VALUES (?,?,?,?,?,?)");  
+							var stmt = db.prepare("INSERT INTO FeedContent(IdFeed, PublishedDate, Title, Content, Url, Author) VALUES (?,?,?,?,?,?)");
 							for(var i = 0; i < articles.length; i++){
 								console.log("\t" + articles[i].published + " -- " + articles[i].title);
 								stmt.run(feed.IdFeed, articles[i].published, articles[i].title, articles[i].content, articles[i].link, articles[i].author);
 							}
-							stmt.finalize();  							
+							stmt.finalize();
 						} else if (content.length > 0 && Date.parse(articles[0].published) != content[0].PublishedDate && articles[0].title != content[0].Title){
 							// if the last one in the DB is not the same as the last one online, we update
 							console.log(feed.IdFeed, feed.Name, " -- Not up to date");
-							var stmt = db.prepare("INSERT INTO FeedContent(IdFeed, PublishedDate, Title, Content, Url, Author) VALUES (?,?,?,?,?,?)");  
+							var stmt = db.prepare("INSERT INTO FeedContent(IdFeed, PublishedDate, Title, Content, Url, Author) VALUES (?,?,?,?,?,?)");
 							stmt.run(feed.IdFeed, articles[0].published, articles[0].title, articles[0].content, articles[0].link, articles[0].author);
 							var i = 1;
 							while(articles.length > i && Date.parse(articles[i].published) != content[0].PublishedDate && articles[i].title != content[0].Title){
 								console.log("\t" + articles[i].published + " -- " + articles[i].title);
 								stmt.run(feed.IdFeed, articles[i].published, articles[i].title, articles[i].content, articles[i].link, articles[i].author);
-								i++;							
+								i++;
 							}
-							stmt.finalize();  
+							stmt.finalize();
 						} else {
 							console.log(feed.IdFeed, feed.Name, " -- Up to date");
 						}
@@ -115,8 +120,8 @@ listOfFeeds.forEach(function(feed){
 						var i = 1;
 						while(articles.length > i && Date.parse(articles[i].published) != Date.parse(jsonFeed[0].published) && articles[i].title != jsonFeed[0].title){
 							console.log(Date.parse(articles[i].published) + " -- " + Date.parse(jsonFeed[0].published))
-							jsonFeed.push(articles[i]);							
-							i++;							
+							jsonFeed.push(articles[i]);
+							i++;
 						}
 						console.log(feed.file + " maintenant à jour ! -- " + jsonFeed.length);
 						fs.writeFile(fileName, JSON.stringify(jsonFeed), function(err) {

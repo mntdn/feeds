@@ -12,12 +12,12 @@
 		<!-- <link rel="stylesheet" href="css/angular-material.min.css"> -->
 	</head>
 	<body>
-		<div ng-controller="feedsController" class="{{activateMainClass}}"> 
+		<div ng-controller="feedsController" class="{{activateMainClass}}">
 			<div class="leftCol">
 				<i class="fa fa-cog fa-lg" ng-click="openDialog()"></i> {{currentUser}}
 				<ul class="feedList">
 					<li ng-repeat="feed in feeds" class="{{classWhenActive(feed)}}">
-						<a href="" ng-click="feedLoad(feed.IdFeed)">{{ feed.Name }} ({{ feed.NbItems }})</a>
+						<a href="" ng-click="feedLoad(feed.IdFeed)">{{ feed.CategoryName }} {{ feed.Name }} ({{ feed.NbItems }})</a>
 					</li>
 				</ul>
 				<a href="" ng-click="loadSaved()">Saved items</a>
@@ -30,7 +30,7 @@
 						<i class="fa fa-bookmark{{getState(content.IsSaved)}}" ng-click="postSave(content, 1)"></i>
 						<h2 id="news{{content.IdFeedContent}}"><a id="newsLink{{content.IdFeedContent}}" href="{{content.Url}}">{{content.Title}}</a></h2>
 						<h3>{{content.PublishedDate | date:'dd/MM/yyyy H:mm:ss'}} -- {{content.Author}}</h3>
-					</div>					
+					</div>
 					<div class="newsContent" ng-bind-html="content.Content"></div>
 				</div>
 			</div>
@@ -40,18 +40,27 @@
 				</div>
 			</div>
 		</div>
-		
+
 		<div ng-controller="setupController" class="setupDialog {{classShow}}">
 			<div class="dialogHead">Configuration <i class="fa fa-times" style="float: right; cursor: pointer;" ng-click="closeDialog()"></i></div>
+			<h4>Categories</h4>
+			<div ng-repeat="category in categories" class="category" data-id="{{category.IdCategory}}">{{category.Name}} <i class="fa fa-trash" ng-show="category.IdCategory>=0" ng-click="deleteCategory(category.IdCategory)"></i></div><br />
+			<input type="text" ng-model="categoryToAddName" placeholder="New category"> <i class="fa fa-plus" ng-click="addCategory()"></i>
+			<h4>Feeds</h4>
 			<input type="hidden" value="{{currentFeedId}}" />
-			URL <input type="text" ng-model="feedToAddUrl" placeholder="URL du feed"> 
-			Nom <input type="text" ng-model="feedToAddName" placeholder="Nom du feed"> <i class="fa fa-plus" ng-click="addFeed()"></i>
+			URL <input type="text" ng-model="feedToAddUrl" placeholder="URL du feed">
+			Name <input type="text" ng-model="feedToAddName" placeholder="Nom du feed">
+			<i class="fa fa-plus" ng-click="addFeed()"></i>
 			<ul>
 				<li ng-repeat="feed in feeds">
 					<i class="fa fa-{{addOrRemove(feed)}}-circle" ng-click="feedChangeSubscription(feed)"></i><a href="" ng-click="showFeed(feed)">{{ feed.Name }}</a>
+					<select ng-model="feed.IdCategory" ng-show="feed.IsSubscribed" ng-change="feedChangeCategory(feed)"
+						ng-options="category.IdCategory as category.Name for category in categories">
+						<!-- <option ng-repeat="category in categories" value="{{category.IdCategory}}" ng-selected="feed.IdCategory === category.IdCategory">{{category.Name}}</option> -->
+					</select>
 					<div ng-show="feed.IsShown">
-						URL <input type="text" ng-model="feed.Url"> 
-						Nom <input type="text" ng-model="feed.Name"> 
+						URL <input type="text" ng-model="feed.Url">
+						Nom <input type="text" ng-model="feed.Name">
 						<i class="fa fa-pencil" ng-click="editFeed(feed)"></i>
 						<i class="fa fa-trash" ng-click="deleteFeed(feed)"></i>
 					</div>

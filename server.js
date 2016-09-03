@@ -4,7 +4,7 @@ var db = new sqlite.Database('feeds.sqlite');
 var app = express();
 
 
-// Tous les fichiers seront servis depuis le répertoire web
+// Tous les fichiers seront servis depuis le rï¿½pertoire web
 app.use(express.static('web'));
 // app.use(express.json());
 
@@ -35,6 +35,42 @@ app.post('/deleteFeed', function (req, res) {
 	res.json('ok');
 })
 
+app.get('/allCategoriesList', function (req, res) {
+	console.log(new Date(), "allCategoriesList GET ", req.query);
+	db.all("SELECT \
+		C.IdCategory, \
+		C.Name \
+	FROM User U \
+		INNER JOIN Category C ON U.IdUser = C.IdUser \
+	WHERE U.Name='" + req.query.user + "'\
+	ORDER BY C.Name", function(e,rows){
+		if(e) throw e;
+		res.json(rows);
+	});
+})
+
+app.post('/addCategory', function (req, res) {
+	console.log(new Date(), "addCategory POST ", req.query);
+	db.serialize(function() {
+		db.run("INSERT INTO Category (Name, IdUser) \
+				SELECT '"+ req.query.Name +"', IdUser \
+				FROM User \
+				WHERE Name = '"+ req.query.user +"';");
+		db.all("SELECT IdCategory, Name FROM Category WHERE IdCategory = last_insert_rowid();", function(e,rows){
+			if(e) throw e;
+			res.json(rows);
+		});
+	});
+})
+
+app.post('/deleteCategory', function (req, res) {
+	console.log(new Date(), "deleteCategory POST ", req.query);
+	db.serialize(function() {
+		db.run("DELETE FROM Category WHERE IdCategory = "+req.query.IdCategory+";");
+	});
+	res.json('ok');
+})
+
 app.get('/allFeedsList', function (req, res) {
 	console.log(new Date(), "allFeedsList GET ", req.query);
 	db.all("SELECT \
@@ -42,6 +78,7 @@ app.get('/allFeedsList', function (req, res) {
 		F.Name, \
 		F.Url, \
 		CASE WHEN UF.IdUser IS NULL THEN 0 ELSE 1 END IsSubscribed, \
+		CASE WHEN UF.IdCategory IS NULL THEN -1 ELSE UF.IdCategory END IdCategory, \
 		0 IsShown \
 	FROM User U \
 		CROSS JOIN Feed F  \
@@ -55,6 +92,7 @@ app.get('/allFeedsList', function (req, res) {
 app.get('/feedsList', function (req, res) {
 	console.log(new Date(), "feedsList GET ", req.query);
 	db.all("SELECT \
+		C.Name CategoryName,\
 		F.IdFeed, \
 		F.Name, \
 		( \
@@ -68,6 +106,7 @@ app.get('/feedsList', function (req, res) {
 		INNER JOIN Feed F ON F.IdFeed = UF.IdFeed \
 		LEFT OUTER JOIN FeedContent FC ON FC.IdFeed = F.IdFeed \
 		LEFT OUTER JOIN UserFeedContent UFC ON UFC.IdUser = U.IdUser AND UFC.IdFeedContent = FC.IdFeedContent \
+		LEFT OUTER JOIN Category C ON C.IdCategory = UF.IdCategory \
 	WHERE U.Name='" + req.query.user + "' \
 	GROUP BY F.IdFeed, F.Name", function(e,rows){
 		if(e) throw e;
@@ -117,6 +156,15 @@ app.post('/subscribeToFeed', function (req, res) {
 	res.json("OK");
 })
 
+app.post('/changeFeedCategory', function (req, res) {
+	console.log(new Date(), "changeFeedCategory POST", req.query);
+	db.serialize(function() {
+		db.run("UPDATE UserFeed SET IdCategory = "+ (req.query.IdCategory == -1 ? null : req.query.IdCategory) +" \
+			WHERE IdFeed="+ req.query.IdFeed +" AND IdUser = (SELECT IdUser	FROM User WHERE Name = '"+ req.query.user +"')");
+	});
+	res.json("OK");
+})
+
 app.post('/unsubscribeFromFeed', function (req, res) {
 	console.log(new Date(), "unsubscribeFromFeed POST", req.query);
 	db.serialize(function() {
@@ -130,7 +178,7 @@ app.post('/unsubscribeFromFeed', function (req, res) {
 app.post('/markAllRead', function (req, res) {
 	console.log(new Date(), "markAllRead POST", req.query);
 	db.serialize(function() {
-		// TODO : n'insérer que les posts que l'utilisateur n'a pas déjà lu
+		// TODO : n'insï¿½rer que les posts que l'utilisateur n'a pas dï¿½jï¿½ lu
 		db.run("INSERT OR IGNORE INTO UserFeedContent (IdUser, IdFeedContent, IsRead) \
 			SELECT U.IdUser, FC.IdFeedContent, 1 \
 			FROM User U \
