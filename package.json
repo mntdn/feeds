@@ -6,7 +6,8 @@
   "dependencies": {
     "express": "^4.13.3",
     "feed-read": "^0.0.1",
-    "sqlite3": "^3.1.4"
+    "sqlite3": "^3.1.4",
+    "xml2js": "^0.4.1"
   },
   "devDependencies": {},
   "scripts": {

@@ -92,7 +92,7 @@ app.get('/allFeedsList', function (req, res) {
 app.get('/feedsList', function (req, res) {
 	console.log(new Date(), "feedsList GET ", req.query);
 	db.all("SELECT \
-		C.Name CategoryName,\
+		UF.IdCategory,\
 		F.IdFeed, \
 		F.Name, \
 		( \
@@ -106,7 +106,6 @@ app.get('/feedsList', function (req, res) {
 		INNER JOIN Feed F ON F.IdFeed = UF.IdFeed \
 		LEFT OUTER JOIN FeedContent FC ON FC.IdFeed = F.IdFeed \
 		LEFT OUTER JOIN UserFeedContent UFC ON UFC.IdUser = U.IdUser AND UFC.IdFeedContent = FC.IdFeedContent \
-		LEFT OUTER JOIN Category C ON C.IdCategory = UF.IdCategory \
 	WHERE U.Name='" + req.query.user + "' \
 	GROUP BY F.IdFeed, F.Name", function(e,rows){
 		if(e) throw e;

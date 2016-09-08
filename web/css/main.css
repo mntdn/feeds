@@ -24,9 +24,10 @@ body{
 }
 
 .leftCol{
-	width: 10%;
+	width: 250px;
 	height: 100%;
 	position: fixed;
+    overflow: scroll;
 }
 
 .centerCol{
@@ -61,16 +62,32 @@ body{
 
 ul.feedList {
 	list-style: none;
+    padding-left: 15px;
+}
+
+ul.feedList li {
+	margin: 4px 0;
 }
 
 .feedList li a {
 	text-decoration: none;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    display: inline-block;
 	color: black;
+    width: 170px;
 }
 
 .feedList li:hover {
 	background-color: #ddd;
 	color: black;
+}
+
+span.nbItems{
+    display: inline-block;
+    padding-right: 5px;
+    float: right;
 }
 
 .newsItem {
@@ -117,7 +134,7 @@ ul.feedList {
 
 .newsItem .newsContent {
 	width: 100%;
-	height: 300px;
+	min-height: 300px;
     overflow: auto;
 }
 
@@ -145,6 +162,8 @@ ul.feedList {
 	position: fixed;
 	left: 30%;
 	padding: 8px;
+    max-height: 600px;
+    overflow: scroll;
 	background-color: white;
 	-webkit-box-shadow: 2px 2px 1px 1px rgba(214,214,214,1);
 	-moz-box-shadow: 2px 2px 1px 1px rgba(214,214,214,1);

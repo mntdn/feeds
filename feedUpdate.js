@@ -10,7 +10,7 @@ if(process.argv.length > 2) {
 	table_init = process.argv[2] === 'true';
 }
 
-if(table_init){
+if(table_init) {
 	db.serialize(function() {
 		db.run("DROP TABLE IF EXISTS Feed;");
 		db.run("DROP TABLE IF EXISTS FeedContent;");
@@ -38,7 +38,7 @@ if(table_init){
 		console.log(new Date + " update");
 		rows.forEach(function(feed){
 			feedRead(feed.Url, function(err, articles){
-				if(err) console.log("Erreur feed -- ", err);
+				if(err) console.log("Erreur " + feed.Url + " -- ", err);
 				// var stmt = db.prepare("INSERT INTO FeedContent VALUES (?,?,?,?,?,?)");
 				// articles.forEach(function(article){
 					// stmt.run(feed.IdFeed, article.published, article.title, article.content, article.link, article.author);
@@ -46,7 +46,7 @@ if(table_init){
 				// stmt.finalize();
 				db.all("SELECT * FROM FeedContent WHERE IdFeed = " + feed.IdFeed + " ORDER BY PublishedDate DESC LIMIT 1", function(e2, content){
 					if(e2) console.log("Erreur SQL -- ", e2);
-					if(articles.length > 0){
+					if(articles && articles.length > 0){
 						// if there is no article in the DB we download everything
 						if(	content.length == 0) {
 							console.log(feed.IdFeed, feed.Name, " -- First download of news");
