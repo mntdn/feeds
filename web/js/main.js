@@ -6,7 +6,6 @@ app.controller('feedsController', function($scope, $rootScope, $window, $documen
 	$scope.currentNewsNb = 0; // Number of items in the current RSS feed
 	$scope.currentFeedId = -1; // Id of the current RSS feed
 	$scope.currentFeedTops = [];
-	$scope.comparisonValue = 0; // Used to know if we show the feeds without articles
 
 	$scope.initFeeds = function(){
 		$scope.currentNewsId = 0;
@@ -19,7 +18,7 @@ app.controller('feedsController', function($scope, $rootScope, $window, $documen
 			});
 		$http.get("/allCategoriesList?user="+$scope.currentUser)
 		.then(function(rez) {
-			rez.data.push({"IdCategory":null, "Name":"None"});
+			rez.data.push({"IdCategory":null, "Name":"None", "ShowEmptyFeeds": 0});
 			$scope.categories = rez.data;
 		});
 	}
@@ -152,8 +151,11 @@ app.controller('feedsController', function($scope, $rootScope, $window, $documen
 		});
 	}
 
-	$scope.toggleShowAll = function(){
-		$scope.comparisonValue = $scope.comparisonValue === 0 ? -1 : 0;
+	$scope.toggleShowAll = function(IdCategory){
+		angular.forEach($scope.categories, function(v, i){
+			if(v.IdCategory === IdCategory)
+				v.ShowEmptyFeeds = v.ShowEmptyFeeds === 0 ? -1 : 0;
+		});
 	}
 
 	$scope.openDialog = function(){

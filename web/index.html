@@ -18,11 +18,11 @@
 				<div ng-repeat="category in categories">
 					<h4>{{category.Name}}</h4>
 					<ul class="feedList">
-						<li ng-repeat="feed in feeds | filter:{ IdCategory: category.IdCategory }" ng-show="feed.NbItems > comparisonValue" class="{{classWhenActive(feed)}}">
-							<a href="" ng-click="feedLoad(feed.IdFeed)">{{ feed.Name }}</a><span class="nbItems">{{ feed.NbItems }}</span>
+						<li ng-repeat="feed in feeds | filter:{ IdCategory: category.IdCategory }" ng-show="feed.NbItems > category.ShowEmptyFeeds" class="{{classWhenActive(feed)}}">
+							<a href="" ng-click="feedLoad(feed.IdFeed)" title="{{ feed.Name }}">{{ feed.Name }}</a><span class="nbItems">{{ feed.NbItems }}</span>
 						</li>
 					</ul>
-					<a href="" ng-click="toggleShowAll()">Show all</a>
+					<a href="" ng-click="toggleShowAll(category.IdCategory)">Show all</a>
 				</div>
 				<a href="" ng-click="loadSaved()">Saved items</a>
 			</div>

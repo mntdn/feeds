@@ -2,15 +2,53 @@ var feedRead = require("feed-read");
 var sqlite = require("sqlite3");
 
 var db = new sqlite.Database('feeds.sqlite');
+var dbLog = new sqlite.Database('feedsLog.sqlite');
 
-var table_init = false;
+var mainTableInit = false, logTableInit = false, isVerbose = false;
+
+var nbStmt = 0;
+
+var logStatement;
+function updateLog(url, type, message, finish){
+	if(typeof(finish) !== 'undefined' && finish){
+		logStatement.finalize();
+		return true;
+	}
+	if(nbStmt >= 500){
+		console.log("500 limit");
+		logStatement.finalize();
+		logStatement = dbLog.prepare("INSERT INTO UpdateActions VALUES (?,?,?,?)");
+		nbStmt = 0;
+	}
+	if(typeof(logStatement) === 'undefined')
+	 	logStatement = dbLog.prepare("INSERT INTO UpdateActions VALUES (?,?,?,?)");
+	logStatement.run(url, type, message, (new Date()).toISOString());
+	nbStmt++;
+	console.log(nbStmt);
+	if(isVerbose)
+		console.log(type, url, " -- ", message);
+}
 
 // if some parameters have been passed
 if(process.argv.length > 2) {
-	table_init = process.argv[2] === 'true';
+	for(var i = 2; i < process.argv.length; i++){
+		switch (process.argv[i]) {
+			case "initMain":
+				mainTableInit = true;
+				break;
+			case "initLog":
+				logTableInit = true;
+				break;
+			case "verbose":
+				isVerbose = true;
+				break;
+			default:
+				break;
+		}
+	}
 }
 
-if(table_init) {
+if(mainTableInit) {
 	db.serialize(function() {
 		db.run("DROP TABLE IF EXISTS Feed;");
 		db.run("DROP TABLE IF EXISTS FeedContent;");
@@ -21,58 +59,87 @@ if(table_init) {
 		db.run("CREATE TABLE IF NOT EXISTS FeedContent(IdFeedContent INTEGER PRIMARY KEY, IdFeed INTEGER, PublishedDate INTEGER, Title TEXT, Content TEXT, Url TEXT, Author TEXT, FOREIGN KEY(IdFeed) REFERENCES Feed(IdFeed));");
 		db.run("CREATE TABLE IF NOT EXISTS UserFeedContent(IdUser INTEGER, IdFeedContent INTEGER, IsRead INTEGER, IsSaved INTEGER, FOREIGN KEY(IdUser) REFERENCES User(IdUser), FOREIGN KEY(IdFeedContent) REFERENCES FeedContent(IdFeedContent), UNIQUE(IdUser, IdFeedContent));");
 
-		var stmt = db.prepare("INSERT INTO Feed VALUES (NULL,?,?)");
-		stmt.run('http://www.psychologyofgames.com/feed/', 'Psycho');
-		stmt.run('http://feeds2.feedburner.com/IndependentGaming', 'IG');
-		stmt.run('http://boingboing.net/feed', 'BoingBoing');
-		stmt.finalize();
+		// var stmt = db.prepare("INSERT INTO Feed VALUES (NULL,?,?)");
+		// stmt.run('http://www.psychologyofgames.com/feed/', 'Psycho');
+		// stmt.run('http://feeds2.feedburner.com/IndependentGaming', 'IG');
+		// stmt.run('http://boingboing.net/feed', 'BoingBoing');
+		// stmt.finalize();
 
 		var stmt = db.prepare("INSERT INTO User VALUES (NULL,?)");
 		stmt.run('mat');
 		stmt.finalize();
 	});
 	db.close();
-} else {
+}
+
+if(logTableInit) {
+	dbLog.serialize(function() {
+		dbLog.run("DROP TABLE IF EXISTS UserActions;");
+		dbLog.run("DROP TABLE IF EXISTS UpdateActions;");
+		dbLog.run("CREATE TABLE UserActions(IdUser INTEGER, Url TEXT, Message Text, Date Text);");
+		dbLog.run("CREATE TABLE UpdateActions(UrlFeed Text, LogType Text, Message Text, Date Text);");
+	});
+	dbLog.close();
+}
+
+if(!logTableInit && !mainTableInit){
 	db.all("SELECT * FROM Feed", function(e,rows){
 		if(e) throw e;
-		console.log(new Date + " update");
+		if(isVerbose) console.log(new Date + " update");
+		var nbFeedsToUpdate = rows.length;
 		rows.forEach(function(feed){
 			feedRead(feed.Url, function(err, articles){
-				if(err) console.log("Erreur " + feed.Url + " -- ", err);
-				// var stmt = db.prepare("INSERT INTO FeedContent VALUES (?,?,?,?,?,?)");
-				// articles.forEach(function(article){
-					// stmt.run(feed.IdFeed, article.published, article.title, article.content, article.link, article.author);
-				// });
-				// stmt.finalize();
-				db.all("SELECT * FROM FeedContent WHERE IdFeed = " + feed.IdFeed + " ORDER BY PublishedDate DESC LIMIT 1", function(e2, content){
-					if(e2) console.log("Erreur SQL -- ", e2);
-					if(articles && articles.length > 0){
-						// if there is no article in the DB we download everything
-						if(	content.length == 0) {
-							console.log(feed.IdFeed, feed.Name, " -- First download of news");
-							var stmt = db.prepare("INSERT INTO FeedContent(IdFeed, PublishedDate, Title, Content, Url, Author) VALUES (?,?,?,?,?,?)");
-							for(var i = 0; i < articles.length; i++){
-								console.log("\t" + articles[i].published + " -- " + articles[i].title);
-								stmt.run(feed.IdFeed, articles[i].published, articles[i].title, articles[i].content, articles[i].link, articles[i].author);
-							}
-							stmt.finalize();
-						} else if (content.length > 0 && Date.parse(articles[0].published) != content[0].PublishedDate && articles[0].title != content[0].Title){
-							// if the last one in the DB is not the same as the last one online, we update
-							console.log(feed.IdFeed, feed.Name, " -- Not up to date");
-							var stmt = db.prepare("INSERT INTO FeedContent(IdFeed, PublishedDate, Title, Content, Url, Author) VALUES (?,?,?,?,?,?)");
-							stmt.run(feed.IdFeed, articles[0].published, articles[0].title, articles[0].content, articles[0].link, articles[0].author);
-							var i = 1;
-							while(articles.length > i && Date.parse(articles[i].published) != content[0].PublishedDate && articles[i].title != content[0].Title){
-								console.log("\t" + articles[i].published + " -- " + articles[i].title);
-								stmt.run(feed.IdFeed, articles[i].published, articles[i].title, articles[i].content, articles[i].link, articles[i].author);
-								i++;
-							}
-							stmt.finalize();
-						} else {
-							console.log(feed.IdFeed, feed.Name, " -- Up to date");
-						}
+				if(err) {
+					updateLog(feed.Url, 'Error', err.toString());
+					nbFeedsToUpdate--;
+					// console.log("*-*-*-*-*- NB : ", nbFeedsToUpdate);
+					if(nbFeedsToUpdate === 0){
+						// on met à jour le log
+						if(isVerbose) console.log("LOG UPDATE");
+						updateLog('','','',true);
+						console.log("before end", nbStmt);
 					}
-				});
+				} else {
+					db.all("SELECT * FROM FeedContent WHERE IdFeed = " + feed.IdFeed + " ORDER BY PublishedDate DESC LIMIT 1", function(e2, content){
+						if(e2 && isVerbose) console.log("Erreur SQL -- ", e2);
+						if(articles && articles.length > 0){
+							// if there is no article in the DB we download everything
+							if(	content.length == 0) {
+								if(isVerbose) console.log(feed.IdFeed, feed.Name, " -- First download of news");
+								var stmt = db.prepare("INSERT INTO FeedContent(IdFeed, PublishedDate, Title, Content, Url, Author) VALUES (?,?,?,?,?,?)");
+								for(var i = 0; i < articles.length; i++){
+									if(isVerbose) console.log("\t" + articles[i].published + " -- " + articles[i].title);
+									stmt.run(feed.IdFeed, articles[i].published, articles[i].title, articles[i].content, articles[i].link, articles[i].author);
+									updateLog(feed.Url, 'insert', articles[i].published + " -- " + articles[i].title);
+								}
+								stmt.finalize();
+							} else if (content.length > 0 && Date.parse(articles[0].published) != content[0].PublishedDate && articles[0].title != content[0].Title){
+								// if the last one in the DB is not the same as the last one online, we update
+								if(isVerbose) console.log(feed.IdFeed, feed.Name, " -- Not up to date");
+								var stmt = db.prepare("INSERT INTO FeedContent(IdFeed, PublishedDate, Title, Content, Url, Author) VALUES (?,?,?,?,?,?)");
+								stmt.run(feed.IdFeed, articles[0].published, articles[0].title, articles[0].content, articles[0].link, articles[0].author);
+								var i = 1;
+								while(articles.length > i && Date.parse(articles[i].published) != content[0].PublishedDate && articles[i].title != content[0].Title){
+									if(isVerbose) console.log("\t" + articles[i].published + " -- " + articles[i].title);
+									stmt.run(feed.IdFeed, articles[i].published, articles[i].title, articles[i].content, articles[i].link, articles[i].author);
+									updateLog(feed.Url, 'insert', articles[i].published + " -- " + articles[i].title);
+									i++;
+								}
+								stmt.finalize();
+							} else {
+								if(isVerbose) console.log(feed.IdFeed, feed.Name, " -- Up to date");
+							}
+						}
+						nbFeedsToUpdate--;
+						// console.log("*-*-*-*-*- NB : ", nbFeedsToUpdate);
+						if(nbFeedsToUpdate === 0){
+							// on met à jour le log
+							if(isVerbose) console.log("LOG UPDATE");
+							updateLog('','','',true);
+							console.log("after end", nbStmt);
+						}
+					});
+				}
 			});
 		});
 	});

@@ -2,3 +2,4 @@ node_modules
 feeds.sqlite
 feeds.sqlite
 feeds.sqlite
+feedsLog.sqlite

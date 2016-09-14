@@ -39,7 +39,8 @@ app.get('/allCategoriesList', function (req, res) {
 	console.log(new Date(), "allCategoriesList GET ", req.query);
 	db.all("SELECT \
 		C.IdCategory, \
-		C.Name \
+		C.Name, \
+		0 ShowEmptyFeeds\
 	FROM User U \
 		INNER JOIN Category C ON U.IdUser = C.IdUser \
 	WHERE U.Name='" + req.query.user + "'\
