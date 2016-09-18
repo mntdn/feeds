@@ -129,6 +129,19 @@ app.get('/toReadLaterList', function (req, res) {
 	});
 })
 
+app.get('/toReadLaterCount', function (req, res) {
+	console.log(new Date(), "toReadLaterCount GET ", req.query);
+	db.all("SELECT \
+		COUNT(*) AS Nb \
+	FROM User U \
+		INNER JOIN UserFeedContent UFC ON UFC.IdUser = U.IdUser AND UFC.IsSaved = 1 \
+		INNER JOIN FeedContent FC ON FC.IdFeedContent = UFC.IdFeedContent \
+	WHERE U.Name='" + req.query.user + "'", function(e,rows){
+		if(e) throw e;
+		res.json(rows);
+	});
+})
+
 app.get('/feedContent', function (req, res) {
 	console.log(new Date(), "feedContent GET", req.query);
 	db.all("SELECT FC.IdFeedContent, FC.Content, FC.PublishedDate, FC.Title, FC.Url, FC.Author, \
@@ -139,7 +152,7 @@ app.get('/feedContent', function (req, res) {
 			INNER JOIN FeedContent FC ON FC.IdFeed = UF.IdFeed \
 			LEFT OUTER JOIN UserFeedContent UFC ON UFC.IdFeedContent = FC.IdFeedContent AND UFC.IdUser = U.IdUser \
 		WHERE U.Name='" + req.query.user + "' \
-		ORDER BY FC.PublishedDate DESC", function(e,rows){
+		ORDER BY IsRead ASC, FC.PublishedDate DESC", function(e,rows){
 		if(e) throw e;
 		res.json(rows);
 	});

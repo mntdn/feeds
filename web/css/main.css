@@ -69,6 +69,10 @@ ul.feedList li {
 	margin: 4px 0;
 }
 
+ul.feedList li.current {
+	font-weight: bold;
+}
+
 .feedList li a {
 	text-decoration: none;
     text-overflow: ellipsis;
@@ -99,12 +103,12 @@ span.nbItems{
 	text-align: justify;
 }
 
-.newsItem.read {
-	background-color: #eee;
+.newsItem.read h2 a {
+    color: #aaa !important;
 }
 
 .currentItem{
-	border: 4px solid #AAAAAA !important;
+	border-color: black;
 }
 
 .newsItem .newsHeader {
@@ -134,7 +138,6 @@ span.nbItems{
 
 .newsItem .newsContent {
 	width: 100%;
-	min-height: 300px;
     overflow: auto;
 }
 

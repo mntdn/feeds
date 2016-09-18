@@ -5,7 +5,7 @@ app.controller('feedsController', function($scope, $rootScope, $window, $documen
 	$scope.currentNewsId = 0; // Id of the current news item shown
 	$scope.currentNewsNb = 0; // Number of items in the current RSS feed
 	$scope.currentFeedId = -1; // Id of the current RSS feed
-	$scope.currentFeedTops = [];
+	$scope.nbSavedItems = 0; // number of saved items
 
 	$scope.initFeeds = function(){
 		$scope.currentNewsId = 0;
@@ -21,124 +21,142 @@ app.controller('feedsController', function($scope, $rootScope, $window, $documen
 			rez.data.push({"IdCategory":null, "Name":"None", "ShowEmptyFeeds": 0});
 			$scope.categories = rez.data;
 		});
+		$http.get("/toReadLaterCount?user="+$scope.currentUser)
+		.then(function(rez) {
+			$scope.nbSavedItems = rez.data[0].Nb;
+		});
 	}
 
 	$scope.initFeeds();
 
-	$window.onscroll = function(e) {
+	$scope.getCurrentNewsItem = function(){
 		var scrollPos = document.body.scrollTop || document.documentElement.scrollTop || 0;
-		var i;
-		for(i = 0; i < $scope.currentFeedTops.length; i++){
-			if($scope.currentFeedTops[i].top > scrollPos)
+		var bodyRectTop = document.body.getBoundingClientRect().top;
+		var newsList = document.getElementsByClassName("newsItem");
+		var finalId = "";
+		for(var i = 0; i < newsList.length; i++) {
+			var currentRect = newsList[i].getBoundingClientRect();
+			// we're not on anything yet
+			if(scrollPos < currentRect.top)
 				break;
+			if(currentRect.bottom < 0) // element outside of the screen -> next one !
+				continue;
+			// the first element on screen is the good one !
+			finalId = newsList[i].getAttribute("data-id-feed");
+			break;
 		}
-		--i;
-		i = i < 0 ? 0 : i;
+		return finalId === "" ? null : parseInt(finalId, 10);
+	}
 
-		$scope.$apply(function(){
-			$scope.currentNewsId = i;
-			if ($scope.feedContent[i].IsRead == 0){
-				// mark current item as read if not already read
-				$http.post("/changeRead?user="+$scope.currentUser+"&read=1&IdFC="+$scope.feedContent[i].IdFeedContent)
-					.then(function(response) {
-						$scope.feedContent[i].IsRead = 1;
-						$scope.changeNbRead(-1);
-					});
+	$window.onscroll = function(e) {
+		var currentId = $scope.getCurrentNewsItem();
+		if(currentId !== null){
+			var j = 0;
+			for(; j < $scope.feedContent.length; j++){
+				if($scope.feedContent[j].IdFeedContent === currentId)
+					break;
 			}
-		});
+			$scope.currentNewsId = j;
+			$scope.$apply();
+			if ($scope.feedContent[j].IsRead == 0){
+				$scope.feedContent[j].IsRead = 1;
+				$scope.changeNbRead(-1);
+				// mark current item as read if not already read
+				$http.post("/changeRead?user="+$scope.currentUser+"&read=1&IdFC="+$scope.feedContent[j].IdFeedContent)
+					.then(function(response) { });
+			}
+		}
 	};
 
     $document.bind("keypress", function(event) {
 		// listening to events only if not in configuration mode
 		if($scope.activateMainClass === ""){
-			// we're going to modify the $scope, so let's wrap this in $apply
-			$scope.$apply(function(){
-				if(event.shiftKey && event.code === "KeyJ"){
-					// SHIFT+J ---> next feed with unread items
-					var reload = false;
-					if($scope.currentFeedId === -1 && $scope.feeds.length > 0){
-						$scope.currentFeedId = $scope.feeds[0].IdFeed;
-						reload = true;
+			if(event.shiftKey && event.code === "KeyJ"){
+				// SHIFT+J ---> next feed with unread items
+				var reload = false;
+				if($scope.currentFeedId === -1 && $scope.feeds.length > 0){
+					$scope.currentFeedId = $scope.feeds[0].IdFeed;
+					reload = true;
+				}
+				else if($scope.feeds.length > 0){
+					var i=0;
+					for(;i<$scope.feeds.length; i++)
+						if($scope.feeds[i].IdFeed === $scope.currentFeedId)
+							break;
+					if(i !== $scope.feeds.length - 1){
+						i++;
+						for(;i<$scope.feeds.length; i++){
+							if($scope.feeds[i].NbItems > 0){
+								$scope.currentFeedId = $scope.feeds[i].IdFeed;
+								reload = true;
+								break;
+							}
+						}
 					}
-					else if($scope.feeds.length > 0){
+				}
+				if($scope.currentFeedId !== -1 && reload)
+					$scope.feedLoad($scope.currentFeedId);
+			}
+			if(event.shiftKey && event.code === "KeyK"){
+				// SHIFT+K ---> previous feed with unread items
+				var reload = false;
+				if($scope.currentFeedId !== -1){
+					if($scope.feeds.length > 0){
 						var i=0;
 						for(;i<$scope.feeds.length; i++)
 							if($scope.feeds[i].IdFeed === $scope.currentFeedId)
 								break;
-						if(i < $scope.feeds.length - 1){
-							$scope.currentFeedId = $scope.feeds[i+1].IdFeed;
+						if(i > 0){
+							$scope.currentFeedId = $scope.feeds[i-1].IdFeed;
 							reload = true;
 						}
 					}
-					if($scope.currentFeedId !== -1 && reload)
-						$scope.feedLoad($scope.currentFeedId);
 				}
-				if(event.shiftKey && event.code === "KeyK"){
-					// SHIFT+K ---> previous feed with unread items
-					var reload = false;
-					if($scope.currentFeedId !== -1){
-						if($scope.feeds.length > 0){
-							var i=0;
-							for(;i<$scope.feeds.length; i++)
-								if($scope.feeds[i].IdFeed === $scope.currentFeedId)
-									break;
-							if(i > 0){
-								$scope.currentFeedId = $scope.feeds[i-1].IdFeed;
-								reload = true;
-							}
+				if(reload)
+					$scope.feedLoad($scope.currentFeedId);
+			}
+			if(!event.shiftKey && event.code === "KeyJ"){
+				// J ---> next item
+				if($scope.feedContent.length > 0){
+					if ($scope.feedContent[$scope.currentNewsId].IsRead == 0){
+						// mark current item as read if not already read
+						$scope.feedContent[$scope.currentNewsId].IsRead = 1;
+						$scope.changeNbRead(-1);
+						// scroll to the next news item once marked as read
+						if($scope.currentNewsId < $scope.currentNewsNb - 1){
+							$scope.currentNewsId++;
+							document.getElementById('newsItem' + $scope.feedContent[$scope.currentNewsId].IdFeedContent).scrollIntoView();
 						}
-					}
-					if(reload)
-						$scope.feedLoad($scope.currentFeedId);
-				}
-				if(!event.shiftKey && event.code === "KeyJ"){
-					// J ---> next item
-					if($scope.feedContent.length > 0){
-						if ($scope.feedContent[$scope.currentNewsId].IsRead == 0){
-							// mark current item as read if not already read
-							$http.post("/changeRead?user="+$scope.currentUser+"&read=1&IdFC="+$scope.feedContent[$scope.currentNewsId].IdFeedContent)
-								.then(function(response) {
-									$scope.feedContent[$scope.currentNewsId].IsRead = 1;
-									$scope.changeNbRead(-1);
-									// scroll to the next news item once marked as read
-									if($scope.currentNewsId < $scope.currentNewsNb - 1){
-										$scope.currentNewsId++;
-										document.getElementById('newsItem' + $scope.feedContent[$scope.currentNewsId].IdFeedContent).scrollIntoView();
-									}
-							});
-						} else {
-							// scroll to the next news item
-							if($scope.currentNewsId < $scope.currentNewsNb - 1){
-								$scope.currentNewsId++;
-								document.getElementById('newsItem' + $scope.feedContent[$scope.currentNewsId].IdFeedContent).scrollIntoView();
-							}
+						// effectively mark it as read
+						$http.post("/changeRead?user="+$scope.currentUser+"&read=1&IdFC="+$scope.feedContent[$scope.currentNewsId].IdFeedContent)
+							.then(function(response) { });
+					} else {
+						// scroll to the next news item
+						if($scope.currentNewsId < $scope.currentNewsNb - 1){
+							$scope.currentNewsId++;
+							document.getElementById('newsItem' + $scope.feedContent[$scope.currentNewsId].IdFeedContent).scrollIntoView();
 						}
 					}
 				}
-				if(!event.shiftKey && event.code === "KeyK"){
-					// K ---> previous item
-					if($scope.feedContent.length > 0){
-						// scroll to the precedent news item
-						if($scope.currentNewsId > 0){
-							$scope.currentNewsId--;
-							document.getElementById('news' + $scope.feedContent[$scope.currentNewsId].IdFeedContent).scrollIntoView();
-						}
+			}
+			if(!event.shiftKey && event.code === "KeyK"){
+				// K ---> previous item
+				if($scope.feedContent.length > 0){
+					// scroll to the precedent news item
+					if($scope.currentNewsId > 0){
+						$scope.currentNewsId--;
+						document.getElementById('news' + $scope.feedContent[$scope.currentNewsId].IdFeedContent).scrollIntoView();
 					}
 				}
-				if(event.code === "KeyS"){
-					// S ---> mark current item as starred
-					var toReadLater = {
-								UniqueID: 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) { var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8); return v.toString(16);}),
-								Title: $scope.feedContent[$scope.currentNewsId].Title,
-								Url: $sce.trustAsResourceUrl($scope.feedContent[$scope.currentNewsId].Url)
-							};
-					$scope.laterContent.push(toReadLater);
-				}
-				if(event.code === "KeyV"){
-					// V ---> Open current item's link in new window
-					window.open($scope.feedContent[$scope.currentNewsId].Url, '_blank');
-				}
-			});
+			}
+			if(event.code === "KeyS"){
+				// S ---> toggle saving of an item
+				$scope.postToggleSave($scope.feedContent[$scope.currentNewsId]);
+			}
+			if(event.code === "KeyV"){
+				// V ---> Open current item's link in new window
+				window.open($scope.feedContent[$scope.currentNewsId].Url, '_blank');
+			}
 		}
     });
 
@@ -167,16 +185,12 @@ app.controller('feedsController', function($scope, $rootScope, $window, $documen
 		return read === 1 ? "" : "-o";
 	}
 
-	$scope.classWhenRead = function(content){
-		return content.IsRead === 1 ? "read" : "";
-	}
+	$scope.getItemClass = function(content){
+		var finalClass = [];
+		finalClass.push(content.IsRead === 1 ? "read" : "");
+		finalClass.push(content.IdFeedContent === $scope.feedContent[$scope.currentNewsId].IdFeedContent ? "currentItem" : "");
 
-	$scope.classWhenActive = function(content){
-		if(typeof(content.IdFeedContent) !== "undefined")
-			return content.IdFeedContent === $scope.feedContent[$scope.currentNewsId].IdFeedContent ? "currentItem" : "";
-		else {
-			return content.IdFeed === $scope.currentFeedId ? "currentItem" : "";
-		}
+		return finalClass.join(" ");
 	}
 
 	$scope.postRead = function(content, toggle) {
@@ -200,28 +214,11 @@ app.controller('feedsController', function($scope, $rootScope, $window, $documen
 			});
 	}
 
-	$scope.postSave = function(content, toggle) {
-		// if toggle = 1 then we change the saved state of the news item
-		var that = content;
-		var finalSavedState = toggle ? (content.IsSaved === 1 ? 0 : 1) : 0;
-		$http.post("/changeSaved?user="+$scope.currentUser+"&save="+finalSavedState+"&IdFC="+content.IdFeedContent)
-			.then(function(response) {
-				that.IsSaved = finalSavedState;
-				if(toggle && finalSavedState === 0){
-					// if we "unsaved" an item, we have to remove it from the list
-					var posToDelete = -1;
-					for(var i = 0; i < $scope.laterContent.length; i++){
-						if($scope.laterContent[i].IdFeedContent === that.IdFeedContent){
-							posToDelete = i;
-							break;
-						}
-					}
-					if (posToDelete >= 0)
-						$scope.laterContent.splice(posToDelete,1);
-				} else if(toggle && finalSavedState === 1){
-					$scope.laterContent.push(that);
-				}
-			});
+	$scope.postToggleSave = function(content) {
+		$scope.nbSavedItems += content.IsSaved === 1 ? -1 : 1;
+		content.IsSaved = content.IsSaved === 1 ? 0 : 1;
+		$http.post("/changeSaved?user="+$scope.currentUser+"&save="+content.IsSaved+"&IdFC="+content.IdFeedContent)
+			.then(function(response) {});
 	};
 
 	$scope.showHeader = function() {
@@ -274,20 +271,6 @@ app.controller('feedsController', function($scope, $rootScope, $window, $documen
 				$scope.currentNewsNb = response.data.length;
 				$scope.currentNewsId = 0;
 				window.scrollTo(0,0);
-				// let's wait for the DOM drawing phase to have taken place
-				$timeout(function(){
-					$scope.currentFeedTops = [];
-					// now we can store the Y position of all the items
-					angular.forEach($scope.feedContent, function(v, k){
-						$scope.currentFeedTops.push({
-							id: 'newsItem' + v.IdFeedContent,
-							top: window.pageYOffset + document.getElementById('newsItem' + v.IdFeedContent).getBoundingClientRect().top
-						});
-						// v.elemTop = window.pageYOffset + document.getElementById('newsItem' + v.IdFeedContent).getBoundingClientRect().top;
-						// console.log(v.Title + " ***** " + v.elemTop);
-					});
-					// document.getelementbyid('newsitem' + $scope.feedcontent[$scope.currentnewsid].idfeedcontent).scrollintoview()
-				});
 			});
 	}
 
