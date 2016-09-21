@@ -19,7 +19,7 @@
 					<h4>{{category.Name}}</h4>
 					<ul class="feedList">
 						<li ng-repeat="feed in feeds | filter:{ IdCategory: category.IdCategory }" ng-show="feed.NbItems > category.ShowEmptyFeeds" ng-class="feed.IdFeed == currentFeedId ? 'current' : ''">
-							<a href="" ng-click="feedLoad(feed.IdFeed)" title="{{ feed.Name }}">{{ feed.Name }}</a><span class="nbItems">{{ feed.NbItems }}</span>
+							<a href="" ng-click="feedLoad(feed.IdFeed, true)" title="{{ feed.Name }}">{{ feed.Name }}</a><span class="nbItems">{{ feed.NbItems }}</span>
 						</li>
 					</ul>
 					<a href="" ng-click="toggleShowAll(category.IdCategory)">Show all</a>

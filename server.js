@@ -144,6 +144,7 @@ app.get('/toReadLaterCount', function (req, res) {
 
 app.get('/feedContent', function (req, res) {
 	console.log(new Date(), "feedContent GET", req.query);
+	var itemsLimit = 15;
 	db.all("SELECT FC.IdFeedContent, FC.Content, FC.PublishedDate, FC.Title, FC.Url, FC.Author, \
 			CASE WHEN UFC.IsRead IS NULL THEN 0 ELSE UFC.IsRead END IsRead, \
 			CASE WHEN UFC.IsSaved IS NULL THEN 0 ELSE UFC.IsSaved END IsSaved \
@@ -152,7 +153,8 @@ app.get('/feedContent', function (req, res) {
 			INNER JOIN FeedContent FC ON FC.IdFeed = UF.IdFeed \
 			LEFT OUTER JOIN UserFeedContent UFC ON UFC.IdFeedContent = FC.IdFeedContent AND UFC.IdUser = U.IdUser \
 		WHERE U.Name='" + req.query.user + "' \
-		ORDER BY IsRead ASC, FC.PublishedDate DESC", function(e,rows){
+		ORDER BY IsRead ASC, FC.PublishedDate DESC \
+		LIMIT "+itemsLimit, function(e,rows){
 		if(e) throw e;
 		res.json(rows);
 	});
