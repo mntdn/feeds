@@ -23,6 +23,10 @@ body{
 	font-family: Roboto, arial;
 }
 
+[ng-click] {
+    cursor: pointer;
+}
+
 .leftCol{
 	width: 250px;
 	height: 100%;
@@ -52,6 +56,14 @@ body{
 .readLaterCol h2 a{
 	text-decoration: none;
 	color: black;
+}
+
+.userPanel {
+    width: 100%;
+}
+
+.userPanel span.optionRight {
+    float: right;
 }
 
 .feedActionHeader{
@@ -171,6 +183,31 @@ span.nbItems{
 	-webkit-box-shadow: 2px 2px 1px 1px rgba(214,214,214,1);
 	-moz-box-shadow: 2px 2px 1px 1px rgba(214,214,214,1);
 	box-shadow: 2px 2px 1px 1px rgba(214,214,214,1);
+}
+
+
+.loginDialog {
+	width: 400px;
+	position: fixed;
+	left: calc(50% - 200px);
+	padding: 8px;
+    height: 300px;
+	background-color: white;
+	-webkit-box-shadow: 2px 2px 1px 1px rgba(214,214,214,1);
+	-moz-box-shadow: 2px 2px 1px 1px rgba(214,214,214,1);
+	box-shadow: 2px 2px 1px 1px rgba(214,214,214,1);
+}
+
+.loginDialog input{
+    display: block;
+    margin: 10px auto 0 auto;
+    font-size: 24px;
+}
+
+.loginDialog button{
+    display: block;
+    margin: 10px auto 0 auto;
+    font-size: 24px;
 }
 
 .setupDialog .category {

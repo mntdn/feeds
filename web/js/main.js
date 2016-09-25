@@ -1,34 +1,58 @@
 var app = angular.module('feedsApp', []);
+
 app.controller('feedsController', function($scope, $rootScope, $window, $document, $timeout, $http, $sce) {
-	$scope.currentUser = 'mat';
+	$scope.currentUser = '';
 
 	$scope.currentNewsId = 0; // Id of the current news item shown
 	$scope.currentNewsNb = 0; // Number of items in the current RSS feed
 	$scope.currentFeedId = -1; // Id of the current RSS feed
 	$scope.nbSavedItems = 0; // number of saved items
 	$scope.changeByKey = false; // true when the current item changed via a shortcut
+	$scope.loggedIn = false; // not logged in by default
+
+	$scope.errorCallback = function(r){
+		console.log("erreur", r);
+		$scope.loggedIn = false;
+		$rootScope.$broadcast('open-login');
+	}
 
 	$scope.initFeeds = function(){
 		$scope.currentNewsId = 0;
 		$scope.currentNewsNb = 0;
 		$scope.currentFeedId = -1;
 		$scope.feedContent = [];
-		$http.get("/feedsList?user="+$scope.currentUser)
+		$http.get("/getUsername")
 			.then(function(response) {
+				$scope.loggedIn = true; // first thing called, if we're here, we're logged in
+				$scope.currentUser = response.data;
+			}, $scope.errorCallback);
+		$http.get("/feedsList")
+			.then(function(response) {
+				$scope.loggedIn = true; // first thing called, if we're here, we're logged in
 				$scope.feeds = response.data;
-			});
-		$http.get("/allCategoriesList?user="+$scope.currentUser)
-		.then(function(rez) {
-			rez.data.push({"IdCategory":null, "Name":"None", "ShowEmptyFeeds": 0});
-			$scope.categories = rez.data;
-		});
-		$http.get("/toReadLaterCount?user="+$scope.currentUser)
-		.then(function(rez) {
-			$scope.nbSavedItems = rez.data[0].Nb;
-		});
+			}, $scope.errorCallback);
+		$http.get("/allCategoriesList")
+			.then(function(rez) {
+				$scope.loggedIn = true;
+				rez.data.push({"IdCategory":null, "Name":"None", "ShowEmptyFeeds": 0});
+				$scope.categories = rez.data;
+			}, $scope.errorCallback);
+		$http.get("/toReadLaterCount")
+			.then(function(rez) {
+				$scope.loggedIn = true;
+				$scope.nbSavedItems = rez.data[0].Nb;
+			}, $scope.errorCallback);
 	}
 
 	$scope.initFeeds();
+
+	$scope.logout = function(){
+		$http.get("/logout")
+			.then(function(rez) {
+				$scope.loggedIn = false;
+				$scope.initFeeds();
+			});
+	}
 
 	$scope.getCurrentNewsItem = function(){
 		var scrollPos = document.body.scrollTop || document.documentElement.scrollTop || 0;
@@ -63,7 +87,7 @@ app.controller('feedsController', function($scope, $rootScope, $window, $documen
 				$scope.feedContent[j].IsRead = 1;
 				$scope.changeNbRead(-1);
 				// mark current item as read if not already read
-				$http.post("/changeRead?user="+$scope.currentUser+"&read=1&IdFC="+$scope.feedContent[j].IdFeedContent)
+				$http.post("/changeRead?read=1&IdFC="+$scope.feedContent[j].IdFeedContent)
 					.then(function(response) { });
 			}
 		}
@@ -203,7 +227,7 @@ app.controller('feedsController', function($scope, $rootScope, $window, $documen
 		// if toggle = 1 then we change the read state of the news item
 		var that = content;
 		var finalReadState = toggle ? (content.IsRead === 1 ? 0 : 1) : 0;
-		$http.post("/changeRead?user="+$scope.currentUser+"&read="+finalReadState+"&IdFC="+content.IdFeedContent)
+		$http.post("/changeRead?read="+finalReadState+"&IdFC="+content.IdFeedContent)
 			.then(function(response) {
 				that.IsRead = finalReadState;
 				$scope.changeNbRead(toggle ? (finalReadState === 1 ? -1 : 1) : -1);
@@ -211,7 +235,7 @@ app.controller('feedsController', function($scope, $rootScope, $window, $documen
 	};
 
 	$scope.loadSaved = function(){
-		$http.get("/toReadLaterList?user="+$scope.currentUser)
+		$http.get("/toReadLaterList")
 			.then(function(response) {
 				for (var i = 0; i < response.data.length; i++) {
 					response.data[i].Content = $sce.trustAsHtml(response.data[i].Content);
@@ -223,7 +247,7 @@ app.controller('feedsController', function($scope, $rootScope, $window, $documen
 	$scope.postToggleSave = function(content) {
 		$scope.nbSavedItems += content.IsSaved === 1 ? -1 : 1;
 		content.IsSaved = content.IsSaved === 1 ? 0 : 1;
-		$http.post("/changeSaved?user="+$scope.currentUser+"&save="+content.IsSaved+"&IdFC="+content.IdFeedContent)
+		$http.post("/changeSaved?save="+content.IsSaved+"&IdFC="+content.IdFeedContent)
 			.then(function(response) {});
 	};
 
@@ -235,7 +259,7 @@ app.controller('feedsController', function($scope, $rootScope, $window, $documen
 	}
 
 	$scope.readAll = function(){
-		$http.post("/markAllRead?user="+$scope.currentUser+"&IdFeed="+$scope.currentFeedId)
+		$http.post("/markAllRead?IdFeed="+$scope.currentFeedId)
 			.then(function(response) {
 				angular.forEach($scope.feedContent, function(v, k){
 					if(v.IsRead == 0) {
@@ -253,7 +277,7 @@ app.controller('feedsController', function($scope, $rootScope, $window, $documen
 	}
 
 	$scope.unreadAll = function(){
-		$http.post("/markAllUnread?user="+$scope.currentUser+"&IdFeed="+$scope.currentFeedId)
+		$http.post("/markAllUnread?IdFeed="+$scope.currentFeedId)
 			.then(function(response) {
 				angular.forEach($scope.feedContent, function(v, k){
 					if(v.IsRead == 1) {
@@ -269,7 +293,7 @@ app.controller('feedsController', function($scope, $rootScope, $window, $documen
 	}
 
 	$scope.feedLoad = function(idFeed, initial){
-		$http.get("/feedContent?user="+$scope.currentUser+"&id="+idFeed)
+		$http.get("/feedContent?id="+idFeed)
 			.then(function(response) {
 				$scope.currentFeedId = idFeed;
 				for (var i = 0; i < response.data.length; i++) {
@@ -306,6 +330,48 @@ app.controller('feedsController', function($scope, $rootScope, $window, $documen
 		$scope.classShow = "";
 		$scope.initFeeds();
 	});
+
+	$scope.$on('login', function(event, args) {
+		// console.log(args);
+		// $scope.currentUser = args.user;
+		$scope.activateMainClass = "";
+		$scope.classShow = "";
+		$scope.initFeeds();
+	});
+});
+
+app.controller('loginController', function($scope, $rootScope, $http, $sce) {
+	$scope.classShow = 'hide';
+	$scope.loginMode = true;
+	$scope.accountCreateMode = false;
+
+	$scope.$on('open-login', function(event, args) {
+		$scope.classShow = "";
+	});
+
+	$scope.createAccount = function(){
+		$scope.loginMode = false;
+		$scope.accountCreateMode = true;
+	}
+
+	$scope.doLogin = function(){
+		$scope.classShow = 'hide';
+		$http.post("/checkLogin?name="+$scope.login+"&pass="+$scope.password)
+			.then(function(response) {
+				$rootScope.$broadcast('login');
+			});
+		// $rootScope.$broadcast('login', {user: $scope.login});
+	}
+
+	$scope.doCreate = function(){
+		if($scope.createPassword === $scope.createPasswordCheck){
+			$http.post("/createAccount?name="+$scope.createLogin+"&pass="+$scope.createPassword)
+				.then(function(response) {
+					$scope.loginMode = true;
+					$scope.accountCreateMode = false;
+				});
+		}
+	}
 });
 
 app.controller('setupController', function($scope, $rootScope, $http, $sce, categories) {
@@ -316,11 +382,11 @@ app.controller('setupController', function($scope, $rootScope, $http, $sce, cate
 	$scope.$on('open-dialog', function(event, args) {
 		$scope.classShow = "";
 		$scope.currentUser = args.userName;
-		$http.get("/allFeedsList?user="+$scope.currentUser)
+		$http.get("/allFeedsList")
 			.then(function(rez) {
 				$scope.feeds = rez.data;
 			});
-			$http.get("/allCategoriesList?user="+$scope.currentUser)
+			$http.get("/allCategoriesList")
 			.then(function(rez) {
 				rez.data.unshift({"IdCategory":-1, "Name":"None"});
 				$scope.categories = rez.data;
@@ -333,7 +399,7 @@ app.controller('setupController', function($scope, $rootScope, $http, $sce, cate
 	}
 
 	$scope.addCategory = function(){
-		categories.add($scope.currentUser, $scope.categoryToAddName).then(function(response) {
+		categories.add($scope.categoryToAddName).then(function(response) {
 			$scope.categories.push(response.data[0]);
 		});
 	}
@@ -394,14 +460,14 @@ app.controller('setupController', function($scope, $rootScope, $http, $sce, cate
 	}
 
 	$scope.feedChangeCategory = function(feed){
-		$http.post("/changeFeedCategory?IdFeed="+feed.IdFeed+"&IdCategory="+feed.IdCategory+"&user="+$scope.currentUser)
+		$http.post("/changeFeedCategory?IdFeed="+feed.IdFeed+"&IdCategory="+feed.IdCategory)
 			.then(function(response) {});
 	}
 
 	$scope.feedChangeSubscription = function(currentFeed) {
 		if(currentFeed.IsSubscribed === 0){
 			// not subscribed yet, so we begin by subscribing
-			$http.post("/subscribeToFeed?user="+$scope.currentUser+"&IdFeed="+currentFeed.IdFeed)
+			$http.post("/subscribeToFeed?IdFeed="+currentFeed.IdFeed)
 				.then(function(response) {
 					angular.forEach($scope.feeds, function(v, k){
 						if(v.IdFeed === currentFeed.IdFeed)
@@ -410,7 +476,7 @@ app.controller('setupController', function($scope, $rootScope, $http, $sce, cate
 				});
 		} else {
 			// already subscribed, so we unsubscribe
-			$http.post("/unsubscribeFromFeed?user="+$scope.currentUser+"&IdFeed="+currentFeed.IdFeed)
+			$http.post("/unsubscribeFromFeed?IdFeed="+currentFeed.IdFeed)
 				.then(function(response) {
 					angular.forEach($scope.feeds, function(v, k){
 						if(v.IdFeed === currentFeed.IdFeed)
@@ -423,8 +489,8 @@ app.controller('setupController', function($scope, $rootScope, $http, $sce, cate
 
 app.factory('categories', function($http){
 	var categories = {};
-	categories.add = function(user, categoryName) {
-		return $http.post("/addCategory?user="+user+"&Name="+categoryName);
+	categories.add = function(categoryName) {
+		return $http.post("/addCategory?Name="+categoryName);
 	}
 	categories.delete = function(IdCategory) {
 		return $http.post("/deleteCategory?IdCategory="+IdCategory);
