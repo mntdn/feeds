@@ -75,6 +75,7 @@ body{
 ul.feedList {
 	list-style: none;
     padding-left: 15px;
+    margin: 5px 0;
 }
 
 ul.feedList li {
@@ -83,6 +84,24 @@ ul.feedList li {
 
 ul.feedList li.current {
 	font-weight: bold;
+}
+
+.feedsTotal {
+    margin-top: 10px;
+}
+
+h4{
+    margin-bottom: 5px;
+}
+
+.feedsTotal span, h4 span {
+    display: inline-block;
+    padding-right: 5px;
+    float: right;
+}
+
+div>h4:first-of-type {
+    margin-top:10px;
 }
 
 .feedList li a {

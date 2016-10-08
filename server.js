@@ -145,7 +145,8 @@ app.get('/allCategoriesList', function (req, res) {
 	db.all("SELECT \
 		IdCategory, \
 		Name, \
-		0 ShowEmptyFeeds\
+		0 ShowEmptyFeeds,\
+        0 Fold\
 	FROM Category \
 	WHERE IdUser=" + req.session.userId + "\
 	ORDER BY Name", function(e,rows){

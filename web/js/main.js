@@ -54,6 +54,20 @@ app.controller('feedsController', function($scope, $rootScope, $window, $documen
 			});
 	}
 
+	$scope.feedsTotal = function(catId){
+		var nbTotal = 0;
+		if($scope.feeds && $scope.feeds.length > 0){
+			if(catId || catId === null){
+				for(var i=0; i < $scope.feeds.length; i++)
+					nbTotal += $scope.feeds[i].IdCategory === catId ? $scope.feeds[i].NbItems : 0;
+			} else {
+				for(var i=0; i < $scope.feeds.length; i++)
+					nbTotal += $scope.feeds[i].NbItems;
+			}
+		}
+		return nbTotal;
+	}
+
 	$scope.getCurrentNewsItem = function(){
 		var scrollPos = document.body.scrollTop || document.documentElement.scrollTop || 0;
 		var bodyRectTop = document.body.getBoundingClientRect().top;

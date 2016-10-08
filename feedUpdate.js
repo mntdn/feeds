@@ -65,9 +65,9 @@ if(mainTableInit) {
 		// stmt.run('http://boingboing.net/feed', 'BoingBoing');
 		// stmt.finalize();
 
-		var stmt = db.prepare("INSERT INTO User VALUES (NULL,?)");
-		stmt.run('mat');
-		stmt.finalize();
+		// var stmt = db.prepare("INSERT INTO User VALUES (NULL,?)");
+		// stmt.run('mat');
+		// stmt.finalize();
 	});
 	db.close();
 }
@@ -144,73 +144,3 @@ if(!logTableInit && !mainTableInit){
 		});
 	});
 }
-
-/*
-function compareFeeds(a, b) {
-	if (a.feed.published < b.feed.published) {
-		return -1;
-	}
-	if (a.feed.published > b.feed.published) {
-		return 1;
-	}
-	// a must be equal to b
-	return 0;
-}
-
-listOfFeeds.forEach(function(feed){
-	var fileName = "savedFeeds/"+feed.file+".json";
-	// on essaie d'abord de voir si le feed a été sauvegardé
-	fs.access(fileName, fs.R_OK | fs.W_OK, function (err) {
-  		if(!err){
-			// le fichier existe, on le déserialise et on vérifie si on est à jour
-			fs.readFile(fileName, function (err, jsonFile) {
-				if (err) throw err;
-				var jsonFeed = JSON.parse(jsonFile);
-				jsonFeed.sort(compareFeeds);
-				// console.log(feed.file + " - " + jsonFeed[0].published);
-				feedRead(feed.url, function(err, articles){
-					if(err) throw err;
-					console.log("Avant sort");
-					articles.forEach(function(a){console.log(a.published);})
-					articles.sort(compareFeeds);
-					console.log("Après sort");
-					articles.forEach(function(a){console.log(a.published);})
-					console.log(feed.file + " - " + articles[0].published);
-					if(Date.parse(articles[0].published) == Date.parse(jsonFeed[0].published) && articles[0].title == jsonFeed[0].title){
-						console.log(feed.file + " à jour !");
-					}
-					else {
-						console.log(feed.file + " pas à jour ! -- " + jsonFeed.length);
-						console.log(articles[0].published + " -D- " + jsonFeed[0].published)
-						console.log(Date.parse(articles[0].published) + " -- " + Date.parse(jsonFeed[0].published))
-						jsonFeed.push(articles[0]);
-						var i = 1;
-						while(articles.length > i && Date.parse(articles[i].published) != Date.parse(jsonFeed[0].published) && articles[i].title != jsonFeed[0].title){
-							console.log(Date.parse(articles[i].published) + " -- " + Date.parse(jsonFeed[0].published))
-							jsonFeed.push(articles[i]);
-							i++;
-						}
-						console.log(feed.file + " maintenant à jour ! -- " + jsonFeed.length);
-						fs.writeFile(fileName, JSON.stringify(jsonFeed), function(err) {
-							if(err) {
-								return console.log(err);
-							}
-							console.log("OK pour " + (articles.length > 0 ? articles[0].feed.name : feed.file));
-						});
-					}
-				});
-			});
-		} else {
-			// le fichier n'existe pas, il faut le créér
-			feedRead(feed.url, function(err, articles){
-				if(err) throw err;
-				fs.writeFile(fileName, JSON.stringify(articles), function(err) {
-					if(err) {
-						return console.log(err);
-					}
-					console.log("Création de " + (articles.length > 0 ? articles[0].feed.name : feed.file));
-				});
-			});
-		}
-	});
-});*/
