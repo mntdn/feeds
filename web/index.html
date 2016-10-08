@@ -37,16 +37,15 @@
 							<a href="" ng-click="feedLoad(feed.IdFeed, true)" title="{{ feed.Name }}">{{ feed.Name }}</a><span class="nbItems">{{ feed.NbItems }}</span>
 						</li>
 					</ul>
-					<a href="" ng-click="toggleShowAll(category.IdCategory)">Show all</a>
+					<div class="showAll" ng-click="toggleShowAll(category.IdCategory)">
+						<span ng-show="category.ShowEmptyFeeds === 0">Show all</span>
+						<span ng-show="category.ShowEmptyFeeds === -1">Hide empty feeds</span>
+					</div>
 				</div>
-				<ul class="feedList">
-					<li>
-						<a href="" ng-click="loadSaved()">Saved items</a><span class="nbItems">{{ nbSavedItems }}</span>
-					</li>
-				</ul>
+				<h4 ng-click="loadSaved()">Saved items<span class="nbItems">{{ nbSavedItems }}</span></h4>
 			</div>
 			<div class="centerCol">
-				<div class="feedActionHeader" ng-show="showHeader()"><a href="" ng-click="readAll()">Read all</a> | <a href="" ng-click="unreadAll()">Unread all</a></div>
+				<div class="feedActionHeader" ng-show="showHeader()"><span ng-click="readAll()">Read all</span></div>
 				<div class="newsItem" ng-class="getItemClass(content)" id="newsItem{{content.IdFeedContent}}" data-id-feed="{{content.IdFeedContent}}" ng-repeat="content in feedContent">
 					<div class="newsHeader">
 						<i class="fa fa-check-square{{getState(content.IsRead)}}" ng-click="postRead(content, 1)"></i>&nbsp;

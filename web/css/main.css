@@ -119,6 +119,11 @@ div>h4:first-of-type {
 	color: black;
 }
 
+.showAll {
+    padding-left: 15px;
+    font-style: italic;
+}
+
 span.nbItems{
     display: inline-block;
     padding-right: 5px;

@@ -290,22 +290,6 @@ app.controller('feedsController', function($scope, $rootScope, $window, $documen
 			});
 	}
 
-	$scope.unreadAll = function(){
-		$http.post("/markAllUnread?IdFeed="+$scope.currentFeedId)
-			.then(function(response) {
-				angular.forEach($scope.feedContent, function(v, k){
-					if(v.IsRead == 1) {
-						// it was read, we mark it as unread and we increase the nb of items unread
-						v.IsRead = 0;
-						angular.forEach($scope.feeds, function(vf, kf){
-							if(vf.IdFeed === $scope.currentFeedId)
-								vf.NbItems += 1;
-						});
-					}
-				});
-			});
-	}
-
 	$scope.feedLoad = function(idFeed, initial){
 		$http.get("/feedContent?id="+idFeed)
 			.then(function(response) {

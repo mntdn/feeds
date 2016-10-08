@@ -224,8 +224,9 @@ app.get('/toReadLaterList', function (req, res) {
 		FC.IdFeedContent, FC.Content, FC.PublishedDate, FC.Title, FC.Url, \
 		CASE WHEN UFC.IsRead IS NULL THEN 0 ELSE UFC.IsRead END IsRead, \
 		CASE WHEN UFC.IsSaved IS NULL THEN 0 ELSE UFC.IsSaved END IsSaved \
-	FROM UserFeedContent UFC ON UFC.IdUser = " + req.session.userId + " AND UFC.IsSaved = 1 \
-		INNER JOIN FeedContent FC ON FC.IdFeedContent = UFC.IdFeedContent", function(e,rows){
+	FROM UserFeedContent UFC \
+		INNER JOIN FeedContent FC ON FC.IdFeedContent = UFC.IdFeedContent \
+    WHERE UFC.IdUser = " + req.session.userId + " AND UFC.IsSaved = 1", function(e,rows){
 		if(e) throw e;
 		res.json(rows);
 	});
@@ -296,20 +297,9 @@ app.post('/markAllRead', function (req, res) {
 	db.serialize(function() {
 		// TODO : n'ins�rer que les posts que l'utilisateur n'a pas d�j� lu
 		db.run("INSERT OR IGNORE INTO UserFeedContent (IdUser, IdFeedContent, IsRead) \
-			SELECT " + req.session.userId + ", FC.IdFeedContent, 1 \
-			FROM FeedContent FC ON FC.IdFeed = "+ req.query.IdFeed);
+			SELECT " + req.session.userId + ", IdFeedContent, 1 \
+			FROM FeedContent WHERE IdFeed = "+ req.query.IdFeed);
 		db.run("UPDATE UserFeedContent SET IsRead = 1 \
-			WHERE IdUser = " + req.session.userId + " \
-				AND IdFeedContent IN (SELECT IdFeedContent FROM FeedContent WHERE IdFeed = '"+ req.query.IdFeed +"')");
-	});
-	res.json("OK");
-})
-
-URLWithAuth.push("markAllUnread");
-app.post('/markAllUnread', function (req, res) {
-	console.log(new Date(), "markAllUnread POST", req.query);
-	db.serialize(function() {
-		db.run("DELETE FROM UserFeedContent \
 			WHERE IdUser = " + req.session.userId + " \
 				AND IdFeedContent IN (SELECT IdFeedContent FROM FeedContent WHERE IdFeed = '"+ req.query.IdFeed +"')");
 	});
