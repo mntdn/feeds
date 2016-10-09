@@ -88,24 +88,28 @@ app.controller('feedsController', function($scope, $rootScope, $window, $documen
 	}
 
 	$window.onscroll = function(e) {
-		var currentId = $scope.getCurrentNewsItem();
-		if(currentId !== null && !$scope.changeByKey){
-			var j = 0;
-			for(; j < $scope.feedContent.length; j++){
-				if($scope.feedContent[j].IdFeedContent === currentId)
-					break;
+		if($scope.activateMainClass === ""){
+			var currentId = $scope.getCurrentNewsItem();
+			if(currentId !== null && !$scope.changeByKey){
+				var j = 0;
+				for(; j < $scope.feedContent.length; j++){
+					if($scope.feedContent[j].IdFeedContent === currentId)
+						break;
+				}
+				$scope.currentNewsId = j;
+				$scope.$apply();
+				if ($scope.feedContent[j].IsRead == 0){
+					$scope.feedContent[j].IsRead = 1;
+					$scope.changeNbRead(-1);
+					// mark current item as read if not already read
+					$http.post("/changeRead?read=1&IdFC="+$scope.feedContent[j].IdFeedContent)
+						.then(function(response) { });
+				}
 			}
-			$scope.currentNewsId = j;
-			$scope.$apply();
-			if ($scope.feedContent[j].IsRead == 0){
-				$scope.feedContent[j].IsRead = 1;
-				$scope.changeNbRead(-1);
-				// mark current item as read if not already read
-				$http.post("/changeRead?read=1&IdFC="+$scope.feedContent[j].IdFeedContent)
-					.then(function(response) { });
-			}
+			$scope.changeByKey = false;
+		} else {
+			return false;
 		}
-		$scope.changeByKey = false;
 	};
 
     $document.bind("keypress", function(event) {
@@ -262,7 +266,7 @@ app.controller('feedsController', function($scope, $rootScope, $window, $documen
 		$scope.nbSavedItems += content.IsSaved === 1 ? -1 : 1;
 		content.IsSaved = content.IsSaved === 1 ? 0 : 1;
 		$http.post("/changeSaved?save="+content.IsSaved+"&IdFC="+content.IdFeedContent)
-			.then(function(response) {});
+		.then(function(response) {});
 	};
 
 	$scope.showHeader = function() {
@@ -495,3 +499,19 @@ app.factory('categories', function($http){
 	}
 	return categories;
 });
+
+app.directive('ngConfirmClick', [
+    function(){
+        return {
+            link: function (scope, element, attr) {
+                var msg = attr.ngConfirmClick || "Are you sure?";
+                var clickAction = attr.confirmedClick;
+                element.bind('click',function (event) {
+                    if ( window.confirm(msg) ) {
+                        scope.$eval(clickAction)
+                    }
+                });
+            }
+        };
+	}
+])

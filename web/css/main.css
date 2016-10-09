@@ -197,9 +197,9 @@ span.nbItems{
 }
 
 .setupDialog {
-	width: 40%;
+	width: 800px;
 	position: fixed;
-	left: 30%;
+	left: calc(50% - 400px);
 	padding: 8px;
     max-height: 600px;
     overflow: scroll;
@@ -237,6 +237,26 @@ span.nbItems{
 .setupDialog .category {
     display: inline-block;
     padding: 4px;
+}
+
+.setupDialog .feedCard {
+    display: inline-block;
+    border: 1px solid lightgrey;
+    border-radius: 4px;
+    padding: 4px;
+    margin: 5px;
+    width: 230px;
+    vertical-align: top;
+}
+
+.setupDialog .feedCard h5{
+    margin: -5px -5px 5px -5px;
+    text-align: center;
+    background-color: lightgreen;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    padding: 5px 0;
+    font-size: 16px;
 }
 
 .dialogHead {

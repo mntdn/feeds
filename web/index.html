@@ -66,28 +66,34 @@
 		<div ng-controller="setupController" class="setupDialog {{classShow}}">
 			<div class="dialogHead">Configuration <i class="fa fa-times" style="float: right; cursor: pointer;" ng-click="closeDialog()"></i></div>
 			<h4>Categories</h4>
-			<div ng-repeat="category in categories" class="category" data-id="{{category.IdCategory}}">{{category.Name}} <i class="fa fa-trash" ng-show="category.IdCategory>=0" ng-click="deleteCategory(category.IdCategory)"></i></div><br />
+			<div ng-repeat="category in categories" class="category" data-id="{{category.IdCategory}}">
+				{{category.Name}} <i class="fa fa-trash" ng-show="category.IdCategory>=0" confirmed-click="deleteCategory(category.IdCategory)" ng-confirm-click="Are you sur you want to delete {{category.Name}}?"></i>
+			</div><br />
 			<input type="text" ng-model="categoryToAddName" placeholder="New category"> <i class="fa fa-plus" ng-click="addCategory()"></i>
 			<h4>Feeds</h4>
 			<input type="hidden" value="{{currentFeedId}}" />
 			URL <input type="text" ng-model="feedToAddUrl" placeholder="URL du feed">
 			Name <input type="text" ng-model="feedToAddName" placeholder="Nom du feed">
 			<i class="fa fa-plus" ng-click="addFeed()"></i>
-			<ul>
-				<li ng-repeat="feed in feeds">
-					<i class="fa fa-{{addOrRemove(feed)}}-circle" ng-click="feedChangeSubscription(feed)"></i><a href="" ng-click="showFeed(feed)">{{ feed.Name }}</a>
-					<select ng-model="feed.IdCategory" ng-show="feed.IsSubscribed" ng-change="feedChangeCategory(feed)"
-						ng-options="category.IdCategory as category.Name for category in categories">
-						<!-- <option ng-repeat="category in categories" value="{{category.IdCategory}}" ng-selected="feed.IdCategory === category.IdCategory">{{category.Name}}</option> -->
-					</select>
-					<div ng-show="feed.IsShown">
-						URL <input type="text" ng-model="feed.Url">
-						Nom <input type="text" ng-model="feed.Name">
-						<i class="fa fa-pencil" ng-click="editFeed(feed)"></i>
-						<i class="fa fa-trash" ng-click="deleteFeed(feed)"></i>
+			<div>
+				<div ng-repeat="feed in feeds | filter:{ Url: feedToAddUrl, Name: feedToAddName } | limitTo: 9" class="feedCard">
+					<h5>{{ feed.Name }}</h5>
+					<!-- <i class="fa fa-{{addOrRemove(feed)}}-circle" ng-click="feedChangeSubscription(feed)"></i> -->
+					<div ng-click="feedChangeSubscription(feed)"><i class="fa fa-{{addOrRemove(feed)}}-circle"></i>
+						<span ng-show="feed.IsSubscribed">Se désabonner</span>
+						<span ng-show="!feed.IsSubscribed">S'abonner</span>
 					</div>
-				</li>
-			</ul>
+					<div ng-show="feed.IsSubscribed">
+						Categorie <select ng-model="feed.IdCategory" ng-change="feedChangeCategory(feed)"
+							ng-options="category.IdCategory as category.Name for category in categories">
+						</select>
+					</div>
+					URL <input type="text" ng-model="feed.Url"><br />
+					Nom <input type="text" ng-model="feed.Name"><br />
+					<i class="fa fa-pencil" ng-click="editFeed(feed)"></i>
+					<i class="fa fa-trash" confirmed-click="deleteFeed(feed)" ng-confirm-click="Are you sur you want to delete {{feed.Name}}?"></i>
+				</div>
+			</div>
 		</div>
 	</body>
 </html>
