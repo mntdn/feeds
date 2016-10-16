@@ -3,6 +3,7 @@ var crypto = require('crypto');
 var express = require('express');
 var sqlite = require("sqlite3");
 var db = new sqlite.Database('feeds.sqlite');
+var dbLog = new sqlite.Database('feedsLog.sqlite');
 var app = express();
 
 var pwSalt = 'bec5ba18-384c-453f-8ad7-024fb594fbe1'; // GUID used to salt passwords in the DB
@@ -330,6 +331,13 @@ app.post('/changeSaved', function (req, res) {
 	res.json("OK");
 })
 
+app.get('/feedStats', function (req, res) {
+	console.log(new Date(), "feedStats GET ", req.query);
+	dbLog.all("SELECT *	FROM UpdateActions WHERE LogType ='Error'", function(e,rows){
+		if(e) throw e;
+		res.json(rows);
+	});
+})
 
 var server = app.listen(8081, function () {
   var host = server.address().address
