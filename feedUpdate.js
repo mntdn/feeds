@@ -2,6 +2,7 @@ var feedRead = require("feed-read");
 var sqlite = require("sqlite3");
 var crypto = require('crypto');
 
+var fs = require('fs');
 
 var db = new sqlite.Database('feeds.sqlite');
 var dbLog = new sqlite.Database('feedsLog.sqlite');
@@ -83,14 +84,19 @@ if(logTableInit) {
 	});
 	dbLog.close();
 }
-//
-// feedRead('http://xkcd.com/rss.xml', function(err, articles){
+
+// feedRead('http://indiegamehouse.com/feed/', function(err, articles){
 // 	if(err) {
 // 		console.log(feed.Url, 'Error', err.toString());
 // 	} else {
 // 		for(var i = 0; i < articles.length; i++){
 // 			// console.log("\t" + articles[i].published + " -- " + articles[i].title);
-// 			console.log(articles[i].published, articles[i].title, articles[i].content, articles[i].link, articles[i].author);
+// 			var hash = crypto.createHash('sha256');
+// 			hash.update(articles[i].title + articles[i].link);
+// 			// fs.writeFile("feedf" + i + ".txt", articles[i].content);
+// 			var calcHash = hash.digest('hex');
+// 			// console.log(articles[i].published, articles[i].title, articles[i].content, articles[i].link, articles[i].author);
+// 			console.log(articles[i].title, calcHash);
 // 		}
 // 	}
 // });
@@ -100,7 +106,7 @@ if(logTableInit) {
 // 	var i = 0;
 // 	content.forEach(function(feed){
 // 		var hash = crypto.createHash('sha256');
-// 		hash.update(feed.Title + feed.Content);
+// 		hash.update(feed.Title + feed.Url);
 // 		var calcHash = hash.digest('hex');
 // 		var stmt = db.prepare("UPDATE FeedContent SET Hash = ? WHERE IdFeedContent = ?");
 // 		stmt.run(calcHash, feed.IdFeedContent);
@@ -133,10 +139,13 @@ if(!logTableInit && !mainTableInit){
 							if(	content.length == 0) {
 								// if there is no article in the DB we download everything
 								if(isVerbose) console.log(feed.IdFeed, feed.Name, " -- First download of news");
-								var stmt = db.prepare("INSERT INTO FeedContent(IdFeed, PublishedDate, Title, Content, Url, Author) VALUES (?,?,?,?,?,?)");
+								var stmt = db.prepare("INSERT INTO FeedContent(IdFeed, PublishedDate, Title, Content, Url, Author, Hash) VALUES (?,?,?,?,?,?)");
 								for(var i = 0; i < articles.length; i++){
 									if(isVerbose) console.log("\t" + articles[i].published + " -- " + articles[i].title);
-									stmt.run(feed.IdFeed, articles[i].published, articles[i].title, articles[i].content, articles[i].link, articles[i].author);
+									var hash = crypto.createHash('sha256');
+									hash.update(articles[j].title + articles[j].link);
+									var calcHash = hash.digest('hex');
+									stmt.run(feed.IdFeed, articles[i].published, articles[i].title, articles[i].content, articles[i].link, articles[i].author, calcHash);
 									updateLog(feed.IdFeed, 'insert', articles[i].published + " -- " + articles[i].title);
 								}
 								stmt.finalize();
@@ -149,7 +158,7 @@ if(!logTableInit && !mainTableInit){
 								if(isVerbose) console.log(feed.IdFeed, feed.Name, " -- Not up to date");
 								for(var j = 0; j < articles.length; j++){
 									var hash = crypto.createHash('sha256');
-									hash.update(articles[j].title + articles[j].content);
+									hash.update(articles[j].title + articles[j].link);
 									var calcHash = hash.digest('hex');
 									var stmt = db.prepare("INSERT INTO FeedContent(IdFeed, PublishedDate, Title, Content, Url, Author, Hash) VALUES (?,?,?,?,?,?,?)");
 									if(!arrayFind(hashArray, calcHash)){

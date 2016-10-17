@@ -10,6 +10,8 @@ app.controller('feedsController', function($scope, $rootScope, $window, $documen
 	$scope.changeByKey = false; // true when the current item changed via a shortcut
 	$scope.loggedIn = false; // not logged in by default
 
+	$scope.autoMarkRead = true; // true to mark as read when scrolling and using shortcut keys
+
 	$scope.errorCallback = function(r){
 		console.log("erreur", r);
 		$scope.loggedIn = false;
@@ -98,7 +100,7 @@ app.controller('feedsController', function($scope, $rootScope, $window, $documen
 				}
 				$scope.currentNewsId = j;
 				$scope.$apply();
-				if ($scope.feedContent[j].IsRead == 0){
+				if ($scope.autoMarkRead && $scope.feedContent[j].IsRead == 0){
 					$scope.feedContent[j].IsRead = 1;
 					$scope.changeNbRead(-1);
 					// mark current item as read if not already read
@@ -163,7 +165,7 @@ app.controller('feedsController', function($scope, $rootScope, $window, $documen
 				// J ---> next item
 				if($scope.feedContent.length > 0){
 					$scope.changeByKey = true;
-					if ($scope.feedContent[$scope.currentNewsId].IsRead == 0){
+					if ($scope.autoMarkRead && $scope.feedContent[$scope.currentNewsId].IsRead == 0){
 						// mark current item as read if not already read
 						$scope.feedContent[$scope.currentNewsId].IsRead = 1;
 						// scroll to the next news item once marked as read

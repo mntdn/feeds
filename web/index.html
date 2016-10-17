@@ -45,7 +45,10 @@
 				<h4 ng-click="loadSaved()">Saved items<span class="nbItems">{{ nbSavedItems }}</span></h4>
 			</div>
 			<div class="centerCol">
-				<div class="feedActionHeader" ng-show="showHeader()"><span ng-click="readAll()">Read all</span></div>
+				<div class="feedActionHeader" ng-show="showHeader()">
+					<span ng-click="readAll()">Mark all as read</span><br />
+					<input type="checkbox" ng-model="autoMarkRead" /> Auto mark as read
+				</div>
 				<div class="newsItem" ng-class="getItemClass(content)" id="newsItem{{content.IdFeedContent}}" data-id-feed="{{content.IdFeedContent}}" ng-repeat="content in feedContent">
 					<div class="newsHeader">
 						<i class="fa fa-check-square{{getState(content.IsRead)}}" ng-click="postRead(content, 1)"></i>&nbsp;

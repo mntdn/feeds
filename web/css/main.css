@@ -67,9 +67,9 @@ body{
 }
 
 .feedActionHeader{
-	width: 650px;
-	margin: 6px auto;
-	text-align: right;
+    position: fixed;
+    top: 10px;
+    left: calc(50% + 400px);
 }
 
 ul.feedList {
