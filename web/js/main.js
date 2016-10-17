@@ -235,6 +235,10 @@ app.controller('feedsController', function($scope, $rootScope, $window, $documen
 		return read === 1 ? "" : "-o";
 	}
 
+	$scope.getStateRead = function(read){
+		return read ? 'fa-check-square-o' : 'fa-square-o';
+	}
+
 	$scope.getItemClass = function(content){
 		var finalClass = [];
 		finalClass.push(content.IsRead === 1 ? "read" : "");
