@@ -131,6 +131,14 @@ app.post('/editFeed', function (req, res) {
 	});
 })
 
+URLWithAuth.push("changeFeedSortOrder");
+app.post('/changeFeedSortOrder', function (req, res) {
+	console.log(new Date(), "changeFeedSortOrder POST ", req.query);
+	db.serialize(function() {
+		db.run("UPDATE UserFeed SET NewestFirst = (CASE WHEN NewestFirst = 0 THEN 1 ELSE 0 END) WHERE IdFeed = "+ req.query.IdFeed +" AND IdUser = " + req.session.userId);
+	});
+})
+
 URLWithAuth.push("deleteFeed");
 app.post('/deleteFeed', function (req, res) {
 	console.log(new Date(), "deleteFeed POST ", req.query);
@@ -206,7 +214,8 @@ app.get('/feedsList', function (req, res) {
 			FROM FeedContent FC \
 				LEFT OUTER JOIN UserFeedContent UFC ON UFC.IdUser = " + req.session.userId + " AND UFC.IdFeedContent = FC.IdFeedContent \
 			WHERE FC.IdFeed = F.IdFeed AND (UFC.IsRead IS NULL OR UFC.IsRead = 0) \
-		) AS NbItems \
+		) AS NbItems, \
+        UF.NewestFirst \
 	FROM UserFeed UF \
 		INNER JOIN Feed F ON F.IdFeed = UF.IdFeed \
 		LEFT OUTER JOIN FeedContent FC ON FC.IdFeed = F.IdFeed \
@@ -257,7 +266,7 @@ app.get('/feedContent', function (req, res) {
 			INNER JOIN FeedContent FC ON FC.IdFeed = UF.IdFeed \
 			LEFT OUTER JOIN UserFeedContent UFC ON UFC.IdFeedContent = FC.IdFeedContent AND UFC.IdUser = " + req.session.userId + " \
 		WHERE UF.IdUser = " + req.session.userId + " AND UF.IdFeed ="+req.query.id+" AND (UFC.IsRead IS NULL OR UFC.IsRead = 0) \
-		ORDER BY IsRead ASC, FC.PublishedDate DESC \
+		ORDER BY IsRead ASC, FC.PublishedDate "+req.query.direction+" \
 		LIMIT "+itemsLimit, function(e,rows){
 		if(e) throw e;
 		res.json(rows);

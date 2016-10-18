@@ -247,6 +247,25 @@ app.controller('feedsController', function($scope, $rootScope, $window, $documen
 		return finalClass.join(" ");
 	}
 
+	$scope.sortByNewest = function(){
+		for(var i = 0; i < $scope.feeds.length; i++){
+			if($scope.feeds[i].IdFeed === $scope.currentFeedId)
+				return $scope.feeds[i].NewestFirst === 1;
+		}
+		return true;
+	}
+
+	$scope.changeSortOrder = function(){
+		$http.post("/changeFeedSortOrder?IdFeed="+$scope.currentFeedId).then(function(response) {});
+		for(var i = 0; i < $scope.feeds.length; i++){
+			if($scope.feeds[i].IdFeed === $scope.currentFeedId){
+				$scope.feeds[i].NewestFirst = $scope.feeds[i].NewestFirst === 1 ? 0 : 1;
+				break;
+			}
+		}
+		$scope.feedLoad($scope.currentFeedId, true);
+	}
+
 	$scope.postRead = function(content, toggle) {
 		// if toggle = 1 then we change the read state of the news item
 		var that = content;
@@ -301,7 +320,14 @@ app.controller('feedsController', function($scope, $rootScope, $window, $documen
 	}
 
 	$scope.feedLoad = function(idFeed, initial){
-		$http.get("/feedContent?id="+idFeed)
+		var direction = "DESC";
+		for(var i = 0; i < $scope.feeds.length; i++){
+			if($scope.feeds[i].IdFeed === idFeed){
+				direction = $scope.feeds[i].NewestFirst === 1 ? "DESC" : "ASC";
+				break;
+			}
+		}
+		$http.get("/feedContent?id="+idFeed+"&direction="+direction)
 			.then(function(response) {
 				$scope.currentFeedId = idFeed;
 				for (var i = 0; i < response.data.length; i++) {

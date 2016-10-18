@@ -27,7 +27,8 @@
 		<div ng-controller="feedsController" class="{{activateMainClass}}" ng-show="loggedIn">
 			<div class="leftCol">
 				<div class="userPanel">
-					<span ng-click="openDialog()"><i class="fa fa-cog fa-lg"></i> {{currentUser}}</span> <span class="optionRight" ng-click="logout()">Logout</span>
+					<span ng-click="openDialog()"><i class="fa fa-cog fa-lg"></i> {{currentUser}}</span> <span class="optionRight" ng-click="logout()">Logout</span><br />
+					<button type="button" ng-click="openDialog()">Add/remove feeds</button>
 				</div>
 				<div ng-show="feedsTotal() > 0" class="feedsTotal">Total <span>{{feedsTotal()}}</span></div>
 				<div ng-repeat="category in categories">
@@ -47,7 +48,8 @@
 			<div class="centerCol">
 				<div class="feedActionHeader" ng-show="showHeader()">
 					<span ng-click="readAll()">Mark all as read</span><br />
-					<input type="checkbox" ng-model="autoMarkRead" /> Auto mark as read
+					<input type="checkbox" ng-model="autoMarkRead" /> Auto mark as read<br />
+					<input type="checkbox" ng-model="sortByNewest()" ng-click="changeSortOrder()" /> Newest first
 				</div>
 				<div class="newsItem" ng-class="getItemClass(content)" id="newsItem{{content.IdFeedContent}}" data-id-feed="{{content.IdFeedContent}}" ng-repeat="content in feedContent">
 					<div class="newsHeader">

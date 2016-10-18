@@ -1,0 +1,3 @@
+- Ajout configuration utilisateur
+- Configuration feed par utilisateur
+- Système de gestion des préférences
