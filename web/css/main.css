@@ -201,20 +201,6 @@ span.nbItems{
 	display: none;
 }
 
-.setupDialog {
-	width: 800px;
-	position: fixed;
-	left: calc(50% - 400px);
-	padding: 8px;
-    max-height: 600px;
-    overflow: scroll;
-	background-color: white;
-	-webkit-box-shadow: 2px 2px 1px 1px rgba(214,214,214,1);
-	-moz-box-shadow: 2px 2px 1px 1px rgba(214,214,214,1);
-	box-shadow: 2px 2px 1px 1px rgba(214,214,214,1);
-}
-
-
 .loginDialog {
 	width: 400px;
 	position: fixed;
@@ -237,6 +223,58 @@ span.nbItems{
     display: block;
     margin: 10px auto 0 auto;
     font-size: 24px;
+}
+
+.setupDialog, .categoriesDialog {
+	width: 800px;
+	position: fixed;
+	left: calc(50% - 400px);
+	padding: 8px;
+    max-height: 600px;
+    overflow: auto;
+	background-color: white;
+	-webkit-box-shadow: 2px 2px 1px 1px rgba(214,214,214,1);
+	-moz-box-shadow: 2px 2px 1px 1px rgba(214,214,214,1);
+	box-shadow: 2px 2px 1px 1px rgba(214,214,214,1);
+}
+
+.categoriesDialog .category {
+    display: inline-block;
+    padding: 4px;
+    width: 208px;
+    border: 1px solid #FFB577;
+    border-radius: 4px;
+    margin: 6px;
+    vertical-align: top;
+}
+
+.categoriesDialog .category h4 {
+    margin: -5px -5px 5px -5px;
+    text-align: center;
+    background-color: #FFB577;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    padding: 5px 0;
+    font-size: 16px;
+}
+
+.categoriesDialog .feedCard {
+    display: inline-block;
+    border: 1px solid lightgreen;
+    border-radius: 4px;
+    padding: 4px;
+    margin: 5px;
+    width: 190px;
+}
+
+.categoriesDialog .feedCard h5{
+    margin: -5px -5px 5px -5px;
+    text-align: center;
+    background-color: lightgreen;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    padding: 5px 0;
+    font-size: 14px;
 }
 
 .setupDialog .category {
@@ -262,6 +300,23 @@ span.nbItems{
     border-top-right-radius: 4px;
     padding: 5px 0;
     font-size: 16px;
+}
+
+.setupDialog .windowMsgBox{
+    position: absolute;
+    background-color: white;
+    border: 1px solid black;
+    padding: 6px;
+    left: 300px;
+    margin-top: 5px;
+}
+
+.setupDialog .feedsConfigContainer{
+    min-height: 200px;
+}
+
+.setupDialog .error{
+    color: red;
 }
 
 .dialogHead {

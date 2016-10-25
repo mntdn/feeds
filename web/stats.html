@@ -18,7 +18,7 @@
 				Nom <input type="text" ng-model="feed.Name"><br />
 				<i class="fa fa-pencil" ng-click="editFeed(feed)"></i>
 				<i class="fa fa-trash" confirmed-click="deleteFeed(feed)" ng-confirm-click="Are you sur you want to delete {{feed.Name}}?"></i>
-				<div ng-repeat="stat in stats | filter:{ IdFeed: feed.IdFeed }:true" class="error">{{stat.Message}}</div>
+				<div ng-repeat="stat in stats | filter:{ IdFeed: feed.IdFeed }:true | orderBy: '-Date' | limitTo: 1" class="error">{{stat.Date | date:'dd/MM/yyyy HH:mm:ss'}}<br />{{stat.Message}}</div>
 			</div>
 		</div>
 	</body>

@@ -3,7 +3,12 @@
 	<head>
 		<script src="js/angular.min.js"></script>
 		<script src="js/angular-animate.min.js"></script>
+		<script src="js/draganddrop.min.js"></script>
 		<script src="js/main.js"></script>
+		<script src="js/controllers/feeds.js"></script>
+		<script src="js/controllers/login.js"></script>
+		<script src="js/controllers/setup.js"></script>
+		<script src="js/controllers/categories.js"></script>
 		<link rel="stylesheet" type="text/css" href="css/main.css">
 		<link rel="stylesheet" href="css/font-awesome.css">
 	</head>
@@ -28,7 +33,7 @@
 			<div class="leftCol">
 				<div class="userPanel">
 					<span ng-click="openDialog()"><i class="fa fa-cog fa-lg"></i> {{currentUser}}</span> <span class="optionRight" ng-click="logout()">Logout</span><br />
-					<button type="button" ng-click="openDialog()">Add/remove feeds</button>
+					<button type="button" ng-click="openCategoriesDialog()">Add/remove feeds</button>
 				</div>
 				<div ng-show="feedsTotal() > 0" class="feedsTotal">Total <span>{{feedsTotal()}}</span></div>
 				<div ng-repeat="category in categories">
@@ -79,8 +84,19 @@
 			<input type="hidden" value="{{currentFeedId}}" />
 			URL <input type="text" ng-model="feedToAddUrl" placeholder="URL du feed">
 			Name <input type="text" ng-model="feedToAddName" placeholder="Nom du feed">
-			<i class="fa fa-plus" ng-click="addFeed()"></i>
-			<div>
+			<i class="fa fa-plus" ng-click="addFeed()"></i>&nbsp;|&nbsp;
+			<i class="fa fa-check-circle" ng-click="feedTest()"></i>
+			<div class="windowMsgBox" ng-show="showMessageBox">
+				<i class="fa fa-times" style="float: right" ng-click="showMessageBox = false"></i>
+				<div class="error" ng-show="feedError">
+					{{ errorMessage }}
+				</div>
+				<div class="success" ng-show="!feedError">
+					{{ testNumber }} articles<br />
+					1st ({{testDatePublished}}): <a href="{{testUrl}}">{{testTitle}}</a>
+				</div>
+			</div>
+			<div class="feedsConfigContainer">
 				<div ng-repeat="feed in feeds | filter:{ Url: feedToAddUrl, Name: feedToAddName } | limitTo: 9" class="feedCard">
 					<h5>{{ feed.Name }}</h5>
 					<!-- <i class="fa fa-{{addOrRemove(feed)}}-circle" ng-click="feedChangeSubscription(feed)"></i> -->
@@ -97,6 +113,30 @@
 					Nom <input type="text" ng-model="feed.Name"><br />
 					<i class="fa fa-pencil" ng-click="editFeed(feed)"></i>
 					<i class="fa fa-trash" confirmed-click="deleteFeed(feed)" ng-confirm-click="Are you sur you want to delete {{feed.Name}}?"></i>
+				</div>
+			</div>
+		</div>
+
+		<div ng-controller="categoriesController" class="categoriesDialog {{classShow}}">
+			<div class="dialogHead">Feeds &amp; categories management <i class="fa fa-times" style="float: right; cursor: pointer;" ng-click="closeDialog()"></i></div>
+			<div ui-on-Drop="onDrop($event,$data, category.IdCategory)" ng-repeat="category in categories" class="category" data-id="{{category.IdCategory}}">
+				<h4>
+					{{category.Name}} <i class="fa fa-trash" ng-show="category.IdCategory>=0" confirmed-click="deleteCategory(category.IdCategory)" ng-confirm-click="Are you sur you want to delete {{category.Name}}?"></i>
+				</h4>
+				<div class="feedsConfigContainer">
+					<div ui-draggable="true" drag="feed.IdFeed" ng-repeat="feed in feeds | filter:{ IdCategory: category.IdCategory } | limitTo: 10" class="feedCard">
+						<h5 ng-click="feed.showDetails = !feed.showDetails">{{ feed.Name }}</h5>
+						<div ng-show="feed.showDetails">
+							<div ng-click="feedChangeSubscription(feed)"><i class="fa fa-{{addOrRemove(feed)}}-circle"></i>
+								<span ng-show="feed.IsSubscribed">Se désabonner</span>
+								<span ng-show="!feed.IsSubscribed">S'abonner</span>
+							</div>
+							URL <input type="text" ng-model="feed.Url"><br />
+							Nom <input type="text" ng-model="feed.Name"><br />
+							<i class="fa fa-pencil" ng-click="editFeed(feed)"></i>
+							<i class="fa fa-trash" confirmed-click="deleteFeed(feed)" ng-confirm-click="Are you sur you want to delete {{feed.Name}}?"></i>
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>

@@ -4,6 +4,7 @@ var express = require('express');
 var sqlite = require("sqlite3");
 var db = new sqlite.Database('feeds.sqlite');
 var dbLog = new sqlite.Database('feedsLog.sqlite');
+var feedRead = require("feed-read");
 var app = express();
 
 var pwSalt = 'bec5ba18-384c-453f-8ad7-024fb594fbe1'; // GUID used to salt passwords in the DB
@@ -338,6 +339,29 @@ app.post('/changeSaved', function (req, res) {
 			WHERE IdUser = " + req.session.userId + " AND IdFeedContent = "+ req.query.IdFC);
 	});
 	res.json("OK");
+})
+
+URLWithAuth.push("testFeed");
+app.post('/testFeed', function (req, res) {
+	console.log(new Date(), "testFeed POST", req.query);
+    var urlToTest = req.query.url;
+    feedRead(urlToTest, function(err, articles){
+    	if(err) {
+    		console.log(urlToTest, 'Error', err.toString());
+            res.json({
+                err : err.toString()
+            });
+    	} else {
+            res.json({
+                nbArticles: articles.length,
+                firstPublished: articles.length > 0 ? articles[0].published : '',
+                firstTitle: articles.length > 0 ? articles[0].title : '',
+                firstContent: articles.length > 0 ? articles[0].content : '',
+                firstLink: articles.length > 0 ? articles[0].link : '',
+                firstAuthor: articles.length > 0 ? articles[0].author : ''
+            })
+    	}
+    });
 })
 
 app.get('/feedStats', function (req, res) {
