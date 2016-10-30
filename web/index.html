@@ -9,6 +9,7 @@
 		<script src="js/controllers/login.js"></script>
 		<script src="js/controllers/setup.js"></script>
 		<script src="js/controllers/categories.js"></script>
+		<script src="js/controllers/addFeeds.js"></script>
 		<link rel="stylesheet" type="text/css" href="css/main.css">
 		<link rel="stylesheet" href="css/font-awesome.css">
 	</head>
@@ -33,7 +34,8 @@
 			<div class="leftCol">
 				<div class="userPanel">
 					<span ng-click="openDialog()"><i class="fa fa-cog fa-lg"></i> {{currentUser}}</span> <span class="optionRight" ng-click="logout()">Logout</span><br />
-					<button type="button" ng-click="openCategoriesDialog()">Add/remove feeds</button>
+					<button type="button" ng-click="openAddFeedsDialog()">Add feeds</button>
+					<button type="button" ng-click="openCategoriesDialog()">Organize feeds</button>
 				</div>
 				<div ng-show="feedsTotal() > 0" class="feedsTotal">Total <span>{{feedsTotal()}}</span></div>
 				<div ng-repeat="category in categories">
@@ -75,12 +77,13 @@
 
 		<div ng-controller="setupController" class="setupDialog {{classShow}}">
 			<div class="dialogHead">Configuration <i class="fa fa-times" style="float: right; cursor: pointer;" ng-click="closeDialog()"></i></div>
-			<h4>Categories</h4>
-			<div ng-repeat="category in categories" class="category" data-id="{{category.IdCategory}}">
-				{{category.Name}} <i class="fa fa-trash" ng-show="category.IdCategory>=0" confirmed-click="deleteCategory(category.IdCategory)" ng-confirm-click="Are you sur you want to delete {{category.Name}}?"></i>
-			</div><br />
-			<input type="text" ng-model="categoryToAddName" placeholder="New category"> <i class="fa fa-plus" ng-click="addCategory()"></i>
-			<h4>Feeds</h4>
+			<center>
+				<img src="img/underconstruction{{randomGif}}.gif" />
+			</center>
+		</div>
+
+		<div ng-controller="addFeedsController" class="addFeedsDialog {{classShow}}">
+			<div class="dialogHead">Add feeds <i class="fa fa-times" style="float: right; cursor: pointer;" ng-click="closeDialog()"></i></div>
 			<input type="hidden" value="{{currentFeedId}}" />
 			URL <input type="text" ng-model="feedToAddUrl" placeholder="URL du feed">
 			Name <input type="text" ng-model="feedToAddName" placeholder="Nom du feed">
@@ -98,45 +101,38 @@
 			</div>
 			<div class="feedsConfigContainer">
 				<div ng-repeat="feed in feeds | filter:{ Url: feedToAddUrl, Name: feedToAddName } | limitTo: 9" class="feedCard">
-					<h5>{{ feed.Name }}</h5>
+					<h5><a href="{{feed.Url}}" target="_blank">{{ feed.Name }}</a></h5>
 					<!-- <i class="fa fa-{{addOrRemove(feed)}}-circle" ng-click="feedChangeSubscription(feed)"></i> -->
-					<div ng-click="feedChangeSubscription(feed)"><i class="fa fa-{{addOrRemove(feed)}}-circle"></i>
+					<div ng-click="feedChangeSubscription(feed)"><i class="fa fa fa-{{addOrRemove(feed)}}"></i>
 						<span ng-show="feed.IsSubscribed">Se désabonner</span>
 						<span ng-show="!feed.IsSubscribed">S'abonner</span>
 					</div>
-					<div ng-show="feed.IsSubscribed">
+					<!-- <div ng-show="feed.IsSubscribed">
 						Categorie <select ng-model="feed.IdCategory" ng-change="feedChangeCategory(feed)"
 							ng-options="category.IdCategory as category.Name for category in categories">
 						</select>
 					</div>
 					URL <input type="text" ng-model="feed.Url"><br />
-					Nom <input type="text" ng-model="feed.Name"><br />
-					<i class="fa fa-pencil" ng-click="editFeed(feed)"></i>
-					<i class="fa fa-trash" confirmed-click="deleteFeed(feed)" ng-confirm-click="Are you sur you want to delete {{feed.Name}}?"></i>
+					Nom <input type="text" ng-model="feed.Name"><br /> -->
+					<!-- <i class="fa fa-pencil" ng-click="editFeed(feed)"></i>
+					<i class="fa fa-trash" confirmed-click="deleteFeed(feed)" ng-confirm-click="Are you sur you want to delete {{feed.Name}}?"></i> -->
 				</div>
 			</div>
 		</div>
 
 		<div ng-controller="categoriesController" class="categoriesDialog {{classShow}}">
-			<div class="dialogHead">Feeds &amp; categories management <i class="fa fa-times" style="float: right; cursor: pointer;" ng-click="closeDialog()"></i></div>
-			<div ui-on-Drop="onDrop($event,$data, category.IdCategory)" ng-repeat="category in categories" class="category" data-id="{{category.IdCategory}}">
+			<div class="dialogHead">Organize feeds<i class="fa fa-times" style="float: right; cursor: pointer;" ng-click="closeDialog()"></i></div>
+			<input type="text" ng-model="categoryToAddName" placeholder="New category"> <i class="fa fa-plus" ng-click="addCategory()"></i><br />
+			<div ui-on-Drop="onDrop($event,$data, category.IdCategory)" ng-repeat="category in categories" class="category {{ category.IdCategory === -1 ? 'noCategory' : ''}}" data-id="{{category.IdCategory}}">
 				<h4>
-					{{category.Name}} <i class="fa fa-trash" ng-show="category.IdCategory>=0" confirmed-click="deleteCategory(category.IdCategory)" ng-confirm-click="Are you sur you want to delete {{category.Name}}?"></i>
+					{{category.Name}} <i class="fa fa-trash" ng-show="category.IdCategory>=0" confirmed-click="deleteCategory(category.IdCategory)" ng-confirm-click="Are you sur you want to delete {{category.Name}}?"></i><br />
+					<input type="text" placeholder="Search..." ng-model="category.searchTerm" />
 				</h4>
 				<div class="feedsConfigContainer">
-					<div ui-draggable="true" drag="feed.IdFeed" ng-repeat="feed in feeds | filter:{ IdCategory: category.IdCategory } | limitTo: 10" class="feedCard">
-						<h5 ng-click="feed.showDetails = !feed.showDetails">{{ feed.Name }}</h5>
-						<div ng-show="feed.showDetails">
-							<div ng-click="feedChangeSubscription(feed)"><i class="fa fa-{{addOrRemove(feed)}}-circle"></i>
-								<span ng-show="feed.IsSubscribed">Se désabonner</span>
-								<span ng-show="!feed.IsSubscribed">S'abonner</span>
-							</div>
-							URL <input type="text" ng-model="feed.Url"><br />
-							Nom <input type="text" ng-model="feed.Name"><br />
-							<i class="fa fa-pencil" ng-click="editFeed(feed)"></i>
-							<i class="fa fa-trash" confirmed-click="deleteFeed(feed)" ng-confirm-click="Are you sur you want to delete {{feed.Name}}?"></i>
-						</div>
+					<div ui-draggable="true" drag="feed.IdFeed" ng-repeat="feed in feeds | filter:{ IdCategory: category.IdCategory, Name: category.searchTerm } | limitTo: category.nbItemsShown" class="feedCard">
+						<h5 ng-click="feed.showDetails = !feed.showDetails" title="{{ feed.Name }}">{{ feed.Name }}</h5>
 					</div>
+					<div ng-click="category.nbItemsShown = (category.nbItemsShown === 10 ? 99999 : 10)" class="showMore">{{category.nbItemsShown === 10 ? 'More' : 'Less'}}...</div>
 				</div>
 			</div>
 		</div>

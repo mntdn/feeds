@@ -1,5 +1,7 @@
 var cookieSession = require("cookie-session");
 var crypto = require('crypto');
+var FeedParser = require('feedparser');
+var request = require('request');
 var express = require('express');
 var sqlite = require("sqlite3");
 var db = new sqlite.Database('feeds.sqlite');
@@ -345,23 +347,58 @@ URLWithAuth.push("testFeed");
 app.post('/testFeed', function (req, res) {
 	console.log(new Date(), "testFeed POST", req.query);
     var urlToTest = req.query.url;
-    feedRead(urlToTest, function(err, articles){
-    	if(err) {
-    		console.log(urlToTest, 'Error', err.toString());
-            res.json({
-                err : err.toString()
-            });
-    	} else {
-            res.json({
-                nbArticles: articles.length,
-                firstPublished: articles.length > 0 ? articles[0].published : '',
-                firstTitle: articles.length > 0 ? articles[0].title : '',
-                firstContent: articles.length > 0 ? articles[0].content : '',
-                firstLink: articles.length > 0 ? articles[0].link : '',
-                firstAuthor: articles.length > 0 ? articles[0].author : ''
+    try{
+        request(urlToTest)
+            .on('error', function (error) {
+                console.log('req ERR -- ', error.toString());
+                res.json({
+                    err : error.toString()
+                });
             })
-    	}
-    });
+            .on('response', function (result) {
+                var stream = this;
+                if (result.statusCode != 200){
+                    this.emit('error', new Error(result.statusCode));
+                }
+                var feedparser = new FeedParser();
+                stream.pipe(feedparser);
+                feedparser
+                    .on('error', function(error) {
+                        console.log('feed ERR -- ', error.toString());
+                        try{
+                            res.json({
+                                err : error.toString()
+                            });
+                        } catch(error){
+                            console.log(new Date(), 'catch feed', error);
+                        }
+                    })
+                    .on('readable', function() {
+                        var stream = this, meta = this.meta, item;
+                        var nbItems = 0;
+                        var finalResult = {};
+                        while (item = stream.read()) {
+                            nbItems++;
+                            finalResult["firstPublished"] = item.date;
+                            finalResult["firstTitle"] = item.title;
+                            finalResult["firstContent"] = item.description;
+                            finalResult["firstLink"] = item.link;
+                            finalResult["firstAuthor"] = item.author;
+                        }
+                        finalResult["nbArticles"] = nbItems;
+                        try{
+                            res.json(finalResult);
+                        } catch(error){
+                            console.log(new Date(), 'catch read', error);
+                        }
+                    });
+        });
+    } catch(error){
+        console.log(new Date(), 'catch URI', error);
+        res.json({
+            err : error.toString()
+        });
+    }
 })
 
 app.get('/feedStats', function (req, res) {

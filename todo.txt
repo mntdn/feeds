@@ -1,3 +1,7 @@
 - Ajout configuration utilisateur
 - Configuration feed par utilisateur
 - Système de gestion des préférences
+- Prévoir différents modes d'affichage, au moins pouvoir collapser le titre
+- Mode spécial pour lire les feeds de webcomics
+- proposer des feeds par défaut à l'ouverture de l'app
+- ajouter boutons pour naviguer précédent/suivant sans le clavier et sans devoir scroller

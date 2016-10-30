@@ -229,7 +229,12 @@ angular.module('feedsApp').controller('feedsController', function($scope, $rootS
 		$rootScope.$broadcast('open-dialog', {userName:$scope.currentUser});
 	}
 
-    $scope.openCategoriesDialog = function(){
+    $scope.openAddFeedsDialog = function(){
+		$scope.activateMainClass = "disableInput";
+		$rootScope.$broadcast('open-add-feeds-dialog', {userName:$scope.currentUser});
+	}
+
+	$scope.openCategoriesDialog = function(){
 		$scope.activateMainClass = "disableInput";
 		$rootScope.$broadcast('open-categories-dialog', {userName:$scope.currentUser});
 	}
