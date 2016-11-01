@@ -166,6 +166,7 @@ angular.module('feedsApp').controller('feedsController', function($scope, $rootS
 					if ($scope.autoMarkRead && $scope.feedContent[$scope.currentNewsId].IsRead == 0){
 						// mark current item as read if not already read
 						$scope.feedContent[$scope.currentNewsId].IsRead = 1;
+						var idFCToRead = $scope.feedContent[$scope.currentNewsId].IdFeedContent;
 						// scroll to the next news item once marked as read
 						if($scope.currentNewsId < $scope.currentNewsNb - 1){
 							$scope.currentNewsId++;
@@ -173,7 +174,7 @@ angular.module('feedsApp').controller('feedsController', function($scope, $rootS
 						}
 						$scope.changeNbRead(-1);
 						// effectively mark it as read
-						$http.post("/changeRead?user="+$scope.currentUser+"&read=1&IdFC="+$scope.feedContent[$scope.currentNewsId].IdFeedContent)
+						$http.post("/changeRead?user="+$scope.currentUser+"&read=1&IdFC="+idFCToRead)
 							.then(function(response) { });
 					} else {
 						// scroll to the next news item
