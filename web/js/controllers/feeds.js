@@ -68,6 +68,13 @@ angular.module('feedsApp').controller('feedsController', function($scope, $rootS
 			});
 	}
 
+	$scope.scrollToItem = function(newsId){
+		var bodyRect = document.body.getBoundingClientRect(),
+	    elemRect = document.getElementById('newsItem' + newsId).getBoundingClientRect(),
+	    offset = elemRect.top - bodyRect.top;
+		window.scrollTo(0, offset - 34);
+	}
+
 	$scope.feedsTotal = function(catId){
 		var nbTotal = 0;
 		if($scope.feeds && $scope.feeds.length > 0){
@@ -94,7 +101,7 @@ angular.module('feedsApp').controller('feedsController', function($scope, $rootS
 				// scroll to the next news item once marked as read
 				if($scope.currentNewsId < $scope.currentNewsNb - 1){
 					$scope.currentNewsId++;
-					document.getElementById('newsItem' + $scope.feedContent[$scope.currentNewsId].IdFeedContent).scrollIntoView();
+					$scope.scrollToItem($scope.feedContent[$scope.currentNewsId].IdFeedContent);
 				}
 				$scope.changeNbRead(-1);
 				// effectively mark it as read
@@ -104,7 +111,7 @@ angular.module('feedsApp').controller('feedsController', function($scope, $rootS
 				// scroll to the next news item
 				if($scope.currentNewsId < $scope.currentNewsNb - 1){
 					$scope.currentNewsId++;
-					document.getElementById('newsItem' + $scope.feedContent[$scope.currentNewsId].IdFeedContent).scrollIntoView();
+					$scope.scrollToItem($scope.feedContent[$scope.currentNewsId].IdFeedContent);
 				}
 			}
 		}
@@ -115,18 +122,13 @@ angular.module('feedsApp').controller('feedsController', function($scope, $rootS
 			// scroll to the precedent news item
 			if($scope.currentNewsId > 0){
 				$scope.currentNewsId--;
-				document.getElementById('news' + $scope.feedContent[$scope.currentNewsId].IdFeedContent).scrollIntoView();
+				$scope.scrollToItem($scope.feedContent[$scope.currentNewsId].IdFeedContent);
 			}
 		}
 	}
 
 	$scope.nextFeed = function(){
 		var reload = false;
-		// if($scope.currentFeedId === -1 && $scope.feeds.length > 0){
-		// 	$scope.currentFeedId = $scope.feeds[0].IdFeed;
-		// 	reload = true;
-		// }
-		// else
 		if($scope.feeds.length > 0){
 			var i=0;
 			var currentCategoryId;
@@ -138,14 +140,27 @@ angular.module('feedsApp').controller('feedsController', function($scope, $rootS
 						break;
 				currentCategoryId = $scope.feeds[i].IdCategory;
 			}
-			if(i !== $scope.feeds.length - 1){
-				i++;
-				for(;i<$scope.feeds.length; i++){
+			var found = false;
+			var posCategory=0;
+			// get the position of current category in categories list
+			for(;posCategory<$scope.categories.length; posCategory++)
+				if($scope.categories[posCategory].IdCategory === currentCategoryId)
+					break;
+			while(!found){
+				for(i++;i<$scope.feeds.length; i++){
 					if($scope.feeds[i].IdCategory === currentCategoryId && $scope.feeds[i].NbItems > 0){
 						$scope.currentFeedId = $scope.feeds[i].IdFeed;
 						reload = true;
+						found = true;
 						break;
 					}
+				}
+				if(!found && posCategory < $scope.categories.length){
+					// if we haven't found a feed with unread articles in this category, we try to go to the next one
+					currentCategoryId = $scope.categories[++posCategory].IdCategory;
+					i = 0;
+				} else {
+					found = true;
 				}
 			}
 		}
@@ -162,11 +177,28 @@ angular.module('feedsApp').controller('feedsController', function($scope, $rootS
 					if($scope.feeds[i].IdFeed === $scope.currentFeedId)
 						break;
 				var currentCategoryId = $scope.feeds[i].IdCategory;
-				while(--i > 0){
-					if($scope.feeds[i].IdCategory === currentCategoryId && $scope.feeds[i].NbItems > 0){
-						$scope.currentFeedId = $scope.feeds[i].IdFeed;
-						reload = true;
+				var found = false;
+				var posCategory=0;
+				// get the position of current category in categories list
+				for(;posCategory<$scope.categories.length; posCategory++)
+					if($scope.categories[posCategory].IdCategory === currentCategoryId)
 						break;
+				while(!found){
+					while(--i > 0){
+						if($scope.feeds[i].IdCategory === currentCategoryId && $scope.feeds[i].NbItems > 0){
+							$scope.currentFeedId = $scope.feeds[i].IdFeed;
+							reload = true;
+							found = true;
+							break;
+						}
+					}
+					if(!found && posCategory > 0){
+						// if we haven't found a feed with unread articles in this category, we try to go to the previous one
+						currentCategoryId = $scope.categories[--posCategory].IdCategory;
+						// starting from the last feed
+						i = $scope.feeds.length;
+					} else {
+						found = true;
 					}
 				}
 			}
