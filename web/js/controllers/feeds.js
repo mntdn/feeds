@@ -1,9 +1,13 @@
 angular.module('feedsApp').controller('feedsController', function($scope, $rootScope, $window, $document, $timeout, $http, $sce) {
 	$scope.currentUser = '';
 
+	$scope.showCollapseMenu = true; // for smartphone, collapsed menu collapsed by default
+
 	$scope.currentNewsId = 0; // Id of the current news item shown
 	$scope.currentNewsNb = 0; // Number of items in the current RSS feed
 	$scope.currentFeedId = -1; // Id of the current RSS feed
+	$scope.currentFeedName = "";
+	$scope.isCurrentFeedSortByNewest = true;
 	$scope.nbSavedItems = 0; // number of saved items
 	$scope.changeByKey = false; // true when the current item changed via a shortcut
 	$scope.loggedIn = false; // not logged in by default
@@ -23,13 +27,23 @@ angular.module('feedsApp').controller('feedsController', function($scope, $rootS
 		$scope.feedContent = [];
 		$http.get("/getUsername")
 			.then(function(response) {
-				$scope.loggedIn = true; // first thing called, if we're here, we're logged in
+				$scope.loggedIn = true; // if we're here, we're logged in
 				$scope.currentUser = response.data;
 			}, $scope.errorCallback);
 		$http.get("/feedsList")
 			.then(function(response) {
-				$scope.loggedIn = true; // first thing called, if we're here, we're logged in
-				$scope.feeds = response.data;
+				$scope.loggedIn = true; // if we're here, we're logged in
+				// let's sort the feeds by name
+				var filtered = [];
+				angular.forEach(response.data, function(item) {
+					filtered.push(item);
+				});
+				filtered.sort(function (a, b) {
+					var s1 = a.Name.toLowerCase();
+			        var s2 = b.Name.toLowerCase();
+			        return (s1 < s2 ? -1 : s1 > s2 ? 1 : 0);
+				});
+				$scope.feeds = filtered;
 			}, $scope.errorCallback);
 		$http.get("/allCategoriesList")
 			.then(function(rez) {
@@ -66,6 +80,99 @@ angular.module('feedsApp').controller('feedsController', function($scope, $rootS
 			}
 		}
 		return nbTotal;
+	}
+
+	$scope.nextItem = function(isKeyPress){
+		if($scope.feedContent.length > 0){
+			if(isKeyPress){
+				$scope.changeByKey = true;
+			}
+			if ($scope.autoMarkRead && $scope.feedContent[$scope.currentNewsId].IsRead == 0){
+				// mark current item as read if not already read
+				$scope.feedContent[$scope.currentNewsId].IsRead = 1;
+				var idFCToRead = $scope.feedContent[$scope.currentNewsId].IdFeedContent;
+				// scroll to the next news item once marked as read
+				if($scope.currentNewsId < $scope.currentNewsNb - 1){
+					$scope.currentNewsId++;
+					document.getElementById('newsItem' + $scope.feedContent[$scope.currentNewsId].IdFeedContent).scrollIntoView();
+				}
+				$scope.changeNbRead(-1);
+				// effectively mark it as read
+				$http.post("/changeRead?user="+$scope.currentUser+"&read=1&IdFC="+idFCToRead)
+					.then(function(response) { });
+			} else {
+				// scroll to the next news item
+				if($scope.currentNewsId < $scope.currentNewsNb - 1){
+					$scope.currentNewsId++;
+					document.getElementById('newsItem' + $scope.feedContent[$scope.currentNewsId].IdFeedContent).scrollIntoView();
+				}
+			}
+		}
+	}
+
+	$scope.prevItem = function(){
+		if($scope.feedContent.length > 0){
+			// scroll to the precedent news item
+			if($scope.currentNewsId > 0){
+				$scope.currentNewsId--;
+				document.getElementById('news' + $scope.feedContent[$scope.currentNewsId].IdFeedContent).scrollIntoView();
+			}
+		}
+	}
+
+	$scope.nextFeed = function(){
+		var reload = false;
+		// if($scope.currentFeedId === -1 && $scope.feeds.length > 0){
+		// 	$scope.currentFeedId = $scope.feeds[0].IdFeed;
+		// 	reload = true;
+		// }
+		// else
+		if($scope.feeds.length > 0){
+			var i=0;
+			var currentCategoryId;
+			if($scope.currentFeedId === -1){
+				currentCategoryId = $scope.categories[0].IdCategory;
+			} else {
+				for(;i<$scope.feeds.length; i++)
+					if($scope.feeds[i].IdFeed === $scope.currentFeedId)
+						break;
+				currentCategoryId = $scope.feeds[i].IdCategory;
+			}
+			if(i !== $scope.feeds.length - 1){
+				i++;
+				for(;i<$scope.feeds.length; i++){
+					if($scope.feeds[i].IdCategory === currentCategoryId && $scope.feeds[i].NbItems > 0){
+						$scope.currentFeedId = $scope.feeds[i].IdFeed;
+						reload = true;
+						break;
+					}
+				}
+			}
+		}
+		if($scope.currentFeedId !== -1 && reload)
+			$scope.feedLoad($scope.currentFeedId, true);
+	}
+
+	$scope.prevFeed = function(){
+		var reload = false;
+		if($scope.currentFeedId !== -1){
+			if($scope.feeds.length > 0){
+				var i=0;
+				for(;i<$scope.feeds.length; i++)
+					if($scope.feeds[i].IdFeed === $scope.currentFeedId)
+						break;
+				var currentCategoryId = $scope.feeds[i].IdCategory;
+				while(--i > 0){
+					if($scope.feeds[i].IdCategory === currentCategoryId && $scope.feeds[i].NbItems > 0){
+						$scope.currentFeedId = $scope.feeds[i].IdFeed;
+						reload = true;
+						break;
+					}
+				}
+			}
+		}
+		if(reload)
+			$scope.feedLoad($scope.currentFeedId, true);
 	}
 
 	$scope.getCurrentNewsItem = function(){
@@ -117,83 +224,19 @@ angular.module('feedsApp').controller('feedsController', function($scope, $rootS
 		if($scope.activateMainClass === ""){
 			if(event.shiftKey && event.code === "KeyJ"){
 				// SHIFT+J ---> next feed with unread items
-				var reload = false;
-				if($scope.currentFeedId === -1 && $scope.feeds.length > 0){
-					$scope.currentFeedId = $scope.feeds[0].IdFeed;
-					reload = true;
-				}
-				else if($scope.feeds.length > 0){
-					var i=0;
-					for(;i<$scope.feeds.length; i++)
-						if($scope.feeds[i].IdFeed === $scope.currentFeedId)
-							break;
-					if(i !== $scope.feeds.length - 1){
-						i++;
-						for(;i<$scope.feeds.length; i++){
-							if($scope.feeds[i].NbItems > 0){
-								$scope.currentFeedId = $scope.feeds[i].IdFeed;
-								reload = true;
-								break;
-							}
-						}
-					}
-				}
-				if($scope.currentFeedId !== -1 && reload)
-					$scope.feedLoad($scope.currentFeedId, true);
+				$scope.nextFeed();
 			}
 			if(event.shiftKey && event.code === "KeyK"){
 				// SHIFT+K ---> previous feed with unread items
-				var reload = false;
-				if($scope.currentFeedId !== -1){
-					if($scope.feeds.length > 0){
-						var i=0;
-						for(;i<$scope.feeds.length; i++)
-							if($scope.feeds[i].IdFeed === $scope.currentFeedId)
-								break;
-						if(i > 0){
-							$scope.currentFeedId = $scope.feeds[i-1].IdFeed;
-							reload = true;
-						}
-					}
-				}
-				if(reload)
-					$scope.feedLoad($scope.currentFeedId, true);
+				$scope.prevFeed();
 			}
 			if(!event.shiftKey && event.code === "KeyJ"){
 				// J ---> next item
-				if($scope.feedContent.length > 0){
-					$scope.changeByKey = true;
-					if ($scope.autoMarkRead && $scope.feedContent[$scope.currentNewsId].IsRead == 0){
-						// mark current item as read if not already read
-						$scope.feedContent[$scope.currentNewsId].IsRead = 1;
-						var idFCToRead = $scope.feedContent[$scope.currentNewsId].IdFeedContent;
-						// scroll to the next news item once marked as read
-						if($scope.currentNewsId < $scope.currentNewsNb - 1){
-							$scope.currentNewsId++;
-							document.getElementById('newsItem' + $scope.feedContent[$scope.currentNewsId].IdFeedContent).scrollIntoView();
-						}
-						$scope.changeNbRead(-1);
-						// effectively mark it as read
-						$http.post("/changeRead?user="+$scope.currentUser+"&read=1&IdFC="+idFCToRead)
-							.then(function(response) { });
-					} else {
-						// scroll to the next news item
-						if($scope.currentNewsId < $scope.currentNewsNb - 1){
-							$scope.currentNewsId++;
-							document.getElementById('newsItem' + $scope.feedContent[$scope.currentNewsId].IdFeedContent).scrollIntoView();
-						}
-					}
-				}
+				$scope.nextItem(true);
 			}
 			if(!event.shiftKey && event.code === "KeyK"){
 				// K ---> previous item
-				if($scope.feedContent.length > 0){
-					// scroll to the precedent news item
-					if($scope.currentNewsId > 0){
-						$scope.currentNewsId--;
-						document.getElementById('news' + $scope.feedContent[$scope.currentNewsId].IdFeedContent).scrollIntoView();
-					}
-				}
+				$scope.prevItem();
 			}
 			if(event.code === "KeyS"){
 				// S ---> toggle saving of an item
@@ -254,14 +297,6 @@ angular.module('feedsApp').controller('feedsController', function($scope, $rootS
 		finalClass.push(content.IdFeedContent === $scope.feedContent[$scope.currentNewsId].IdFeedContent ? "currentItem" : "");
 
 		return finalClass.join(" ");
-	}
-
-	$scope.sortByNewest = function(){
-		for(var i = 0; i < $scope.feeds.length; i++){
-			if($scope.feeds[i].IdFeed === $scope.currentFeedId)
-				return $scope.feeds[i].NewestFirst === 1;
-		}
-		return true;
 	}
 
 	$scope.changeSortOrder = function(){
@@ -333,6 +368,8 @@ angular.module('feedsApp').controller('feedsController', function($scope, $rootS
 		for(var i = 0; i < $scope.feeds.length; i++){
 			if($scope.feeds[i].IdFeed === idFeed){
 				direction = $scope.feeds[i].NewestFirst === 1 ? "DESC" : "ASC";
+				$scope.currentFeedName = $scope.feeds[i].Name;
+				$scope.isCurrentFeedSortByNewest = $scope.feeds[i].NewestFirst === 1;
 				break;
 			}
 		}

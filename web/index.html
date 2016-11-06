@@ -2,16 +2,8 @@
 <html ng-app="feedsApp">
 	<head>
 		<title>Feeds</title>
-		<script src="js/angular.min.js"></script>
-		<script src="js/angular-animate.min.js"></script>
-		<script src="js/draganddrop.min.js"></script>
-		<script src="js/main.js"></script>
-		<script src="js/controllers/feeds.js"></script>
-		<script src="js/controllers/login.js"></script>
-		<script src="js/controllers/setup.js"></script>
-		<script src="js/controllers/categories.js"></script>
-		<script src="js/controllers/addFeeds.js"></script>
-		<link rel="stylesheet" type="text/css" href="css/main.css">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link rel="stylesheet" type="text/css" href="css/main.min.css">
 		<link rel="stylesheet" href="css/font-awesome.css">
 	</head>
 	<body>
@@ -32,9 +24,22 @@
 		</div>
 
 		<div ng-controller="feedsController" class="{{activateMainClass}}" ng-show="loggedIn">
-			<div class="leftCol">
+			<div class="smartphone topMenuHamburger"><i class="fa fa-lg fa-bars" aria-hidden="true" ng-click="showCollapseMenu = !showCollapseMenu"></i></div>
+			<div class="topMenu">
+				<div class="userPref" ng-click="openDialog()"><i class="fa fa-cog fa-lg"></i> {{currentUser}}</div>
+				<div class="controlButtons">
+					<i ng-click="prevFeed()" class="fa fa-angle-double-left fa-lg button"></i>
+					<i ng-click="prevItem()" class="fa fa-angle-left fa-lg button" ng-show="currentFeedName !== ''"></i>
+					<i ng-click="nextItem(false)" class="fa fa-angle-right fa-lg button" ng-show="currentFeedName !== ''"></i>
+					<i ng-click="nextFeed()" class="fa fa-angle-double-right fa-lg button last"></i>
+					{{currentFeedName}}
+					<i ng-click="readAll()" class="fa fa-check-square-o fa-lg" ng-show="currentFeedName !== ''" title="Mark all as read"></i>
+				</div>
+				<span class="optionRight" ng-click="logout()"><i class="fa fa-power-off fa-lg"></i></span>
+			</div>
+			<div class="leftCol" ng-show="showCollapseMenu">
 				<div class="userPanel">
-					<span ng-click="openDialog()"><i class="fa fa-cog fa-lg"></i> {{currentUser}}</span> <span class="optionRight" ng-click="logout()">Logout</span><br />
+					<!-- <span ng-click="openDialog()"><i class="fa fa-cog fa-lg"></i> {{currentUser}}</span> <span class="optionRight" ng-click="logout()">Logout</span><br /> -->
 					<button type="button" ng-click="openAddFeedsDialog()">Add feeds</button>
 					<button type="button" ng-click="openCategoriesDialog()">Organize feeds</button><br />
 				</div>
@@ -55,9 +60,9 @@
 			</div>
 			<div class="centerCol">
 				<div class="feedActionHeader" ng-show="showHeader()">
-					<span ng-click="readAll()">Mark all as read</span><br />
+					<!-- <span ng-click="readAll()">Mark all as read</span><br /> -->
 					<input type="checkbox" ng-model="autoMarkRead" /> Auto mark as read<br />
-					<input type="checkbox" ng-model="sortByNewest()" ng-click="changeSortOrder()" /> Newest first
+					<input type="checkbox" ng-model="isCurrentFeedSortByNewest" ng-click="changeSortOrder()" /> Newest first
 				</div>
 				<div class="newsItem" ng-class="getItemClass(content)" id="newsItem{{content.IdFeedContent}}" data-id-feed="{{content.IdFeedContent}}" ng-repeat="content in feedContent">
 					<div class="newsHeader">
@@ -69,17 +74,12 @@
 					<div class="newsContent" ng-bind-html="content.Content"></div>
 				</div>
 			</div>
-			<div class="readLaterCol">
-				<div class="newsLater" ng-repeat="later in laterContent">
-					<h2 id="newsLater{{later.IdFeedContent}}"><a id="newsLaterLink{{later.IdFeedContent}}" href="{{later.Url}}">{{later.Title}}</a></h2>
-				</div>
-			</div>
 		</div>
 
 		<div ng-controller="setupController" class="setupDialog {{classShow}}">
 			<div class="dialogHead">Configuration <i class="fa fa-times" style="float: right; cursor: pointer;" ng-click="closeDialog()"></i></div>
 			<center>
-				<img src="img/underconstruction{{randomGif}}.gif" />
+				<img ng-src="img/underconstruction{{randomGif}}.gif" />
 			</center>
 		</div>
 
@@ -137,5 +137,15 @@
 				</div>
 			</div>
 		</div>
+		
+		<script src="js/angular.min.js"></script>
+		<script src="js/angular-animate.min.js"></script>
+		<script src="js/draganddrop.min.js"></script>
+		<script src="js/main.js"></script>
+		<script src="js/controllers/feeds.js"></script>
+		<script src="js/controllers/login.js"></script>
+		<script src="js/controllers/setup.js"></script>
+		<script src="js/controllers/categories.js"></script>
+		<script src="js/controllers/addFeeds.js"></script>
 	</body>
 </html>

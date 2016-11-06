@@ -11,6 +11,22 @@ app.factory('categories', function($http){
 	return categories;
 });
 
+app.filter('orderObjectBy', function() {
+	return function(items, field, reverse) {
+		var filtered = [];
+		angular.forEach(items, function(item) {
+			filtered.push(item);
+		});
+		filtered.sort(function (a, b) {
+			var s1 = a[field].toLowerCase();
+	        var s2 = b[field].toLowerCase();
+	        return (s1 < s2 ? -1 : s1 > s2 ? 1 : 0);
+		});
+		if(reverse) filtered.reverse();
+		return filtered;
+	};
+});
+
 app.directive('ngConfirmClick', [
     function(){
         return {
