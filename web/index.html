@@ -39,10 +39,8 @@
 			</div>
 			<div class="leftCol" ng-show="showCollapseMenu">
 				<div class="userPanel">
-					<!-- <span ng-click="openDialog()"><i class="fa fa-cog fa-lg"></i> {{currentUser}}</span> <span class="optionRight" ng-click="logout()">Logout</span><br /> -->
 					<button type="button" ng-click="openAddFeedsDialog()">Add feeds</button>
 					<button type="button" ng-click="openCategoriesDialog()">Organize feeds</button><br />
-					{{feedContent[currentNewsId].Title}}
 				</div>
 				<div ng-show="feedsTotal() > 0" class="feedsTotal">Total <span>{{feedsTotal()}}</span></div>
 				<div ng-repeat="category in categories">
@@ -61,7 +59,6 @@
 			</div>
 			<div class="centerCol">
 				<div class="feedActionHeader" ng-show="showHeader()">
-					<!-- <span ng-click="readAll()">Mark all as read</span><br /> -->
 					<input type="checkbox" ng-model="autoMarkRead" /> Auto mark as read<br />
 					<input type="checkbox" ng-model="isCurrentFeedSortByNewest" ng-click="changeSortOrder()" /> Newest first
 				</div>

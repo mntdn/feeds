@@ -237,7 +237,6 @@ angular.module('feedsApp').controller('feedsController', function($scope, $rootS
 		if($scope.activateMainClass === ""){
 			var currentId = $scope.getCurrentNewsItem();
 			if(currentId !== null && !$scope.changeByKey){
-				console.log("NO");
 				var j = 0;
 				for(; j < $scope.feedContent.length; j++){
 					if($scope.feedContent[j].IdFeedContent === currentId)
@@ -333,7 +332,6 @@ angular.module('feedsApp').controller('feedsController', function($scope, $rootS
 
 	$scope.getItemClass = function(content){
 		var finalClass = [];
-		// console.log(content.IdFeedContent, $scope.feedContent[$scope.currentNewsId].IdFeedContent, $scope.currentNewsId);
 		finalClass.push(content.IsRead === 1 ? "read" : "");
 		finalClass.push(content.IdFeedContent === $scope.feedContent[$scope.currentNewsId].IdFeedContent ? "currentItem" : "");
 
