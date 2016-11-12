@@ -6,10 +6,13 @@ app.controller('statsController', function($scope, $rootScope, $window, $documen
 			.then(function(response) {
 				$scope.feeds = response.data;
 			}, $scope.errorCallback);
-		$http.get("/feedStats")
+		$http.get("/feedStatsErrors")
 			.then(function(response) {
-				$scope.stats = response.data;
-				console.log($scope.stats);
+				$scope.statsErrors = response.data;
+			}, $scope.errorCallback);
+		$http.get("/feedStatsInsert")
+			.then(function(response) {
+				$scope.statsInsert = response.data;
 			}, $scope.errorCallback);
 	}
 

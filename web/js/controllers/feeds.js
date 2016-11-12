@@ -112,18 +112,25 @@ angular.module('feedsApp').controller('feedsController', function($scope, $rootS
 				if($scope.currentNewsId < $scope.currentNewsNb - 1){
 					$scope.currentNewsId++;
 					$scope.scrollToItem($scope.feedContent[$scope.currentNewsId].IdFeedContent);
+					$scope.$apply();
 				}
 			}
 		}
 	}
 
-	$scope.prevItem = function(){
+	$scope.prevItem = function(isKeyPress){
 		if($scope.feedContent.length > 0){
+			if(isKeyPress){
+				$scope.changeByKey = true;
+			}
 			// scroll to the precedent news item
 			if($scope.currentNewsId > 0){
 				$scope.currentNewsId--;
-				$scope.scrollToItem($scope.feedContent[$scope.currentNewsId].IdFeedContent);
+			} else {
+				$scope.currentNewsId = 0;
 			}
+			$scope.scrollToItem($scope.feedContent[$scope.currentNewsId].IdFeedContent);
+			$scope.$apply();
 		}
 	}
 
@@ -230,6 +237,7 @@ angular.module('feedsApp').controller('feedsController', function($scope, $rootS
 		if($scope.activateMainClass === ""){
 			var currentId = $scope.getCurrentNewsItem();
 			if(currentId !== null && !$scope.changeByKey){
+				console.log("NO");
 				var j = 0;
 				for(; j < $scope.feedContent.length; j++){
 					if($scope.feedContent[j].IdFeedContent === currentId)
@@ -258,23 +266,23 @@ angular.module('feedsApp').controller('feedsController', function($scope, $rootS
 				// SHIFT+J ---> next feed with unread items
 				$scope.nextFeed();
 			}
-			if(event.shiftKey && event.code === "KeyK"){
+			else if(event.shiftKey && event.code === "KeyK"){
 				// SHIFT+K ---> previous feed with unread items
 				$scope.prevFeed();
 			}
-			if(!event.shiftKey && event.code === "KeyJ"){
+			else if(!event.shiftKey && event.code === "KeyJ"){
 				// J ---> next item
 				$scope.nextItem(true);
 			}
-			if(!event.shiftKey && event.code === "KeyK"){
+			else if(!event.shiftKey && event.code === "KeyK"){
 				// K ---> previous item
-				$scope.prevItem();
+				$scope.prevItem(true);
 			}
-			if(event.code === "KeyS"){
+			else if(event.code === "KeyS"){
 				// S ---> toggle saving of an item
 				$scope.postToggleSave($scope.feedContent[$scope.currentNewsId]);
 			}
-			if(event.code === "KeyV"){
+			else if(event.code === "KeyV"){
 				// V ---> Open current item's link in new window
 				window.open($scope.feedContent[$scope.currentNewsId].Url, '_blank');
 			}
@@ -325,6 +333,7 @@ angular.module('feedsApp').controller('feedsController', function($scope, $rootS
 
 	$scope.getItemClass = function(content){
 		var finalClass = [];
+		// console.log(content.IdFeedContent, $scope.feedContent[$scope.currentNewsId].IdFeedContent, $scope.currentNewsId);
 		finalClass.push(content.IsRead === 1 ? "read" : "");
 		finalClass.push(content.IdFeedContent === $scope.feedContent[$scope.currentNewsId].IdFeedContent ? "currentItem" : "");
 

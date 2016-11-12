@@ -39,18 +39,31 @@ hr {
     margin: 5px;
     width: 230px;
     vertical-align: top;
-}
-
-.feedCard h5{
-    margin: -5px -5px 5px -5px;
-    text-align: center;
-    background-color: lightgreen;
-    border-top-left-radius: 4px;
-    border-top-right-radius: 4px;
-    padding: 5px 0;
-    font-size: 16px;
+    h5{
+        margin: -5px -5px 5px -5px;
+        text-align: center;
+        background-color: lightgreen;
+        border-top-left-radius: 4px;
+        border-top-right-radius: 4px;
+        padding: 5px 0;
+        font-size: 16px;
+    }
 }
 
 .error {
     color:red;
+    h4{
+        margin: 3px 0;
+        background-color: lightgrey;
+        text-align: center;
+    }
+}
+
+.insert {
+    color:green;
+    h4{
+        margin: 3px 0;
+        background-color: lightgrey;
+        text-align: center;
+    }
 }

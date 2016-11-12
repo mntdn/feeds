@@ -4,7 +4,7 @@
 		<script src="js/angular.min.js"></script>
 		<script src="js/angular-animate.min.js"></script>
 		<script src="js/stats.js"></script>
-		<link rel="stylesheet" type="text/css" href="css/stats.css">
+		<link rel="stylesheet" type="text/css" href="css/stats.min.css">
 		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
 	</head>
 	<body>
@@ -18,7 +18,14 @@
 				Nom <input type="text" ng-model="feed.Name"><br />
 				<i class="fa fa-pencil" ng-click="editFeed(feed)"></i>
 				<i class="fa fa-trash" confirmed-click="deleteFeed(feed)" ng-confirm-click="Are you sur you want to delete {{feed.Name}}?"></i>
-				<div ng-repeat="stat in stats | filter:{ IdFeed: feed.IdFeed }:true | orderBy: '-Date' | limitTo: 1" class="error">{{stat.Date | date:'dd/MM/yyyy HH:mm:ss'}}<br />{{stat.Message}}</div>
+				<div ng-repeat="stat in statsErrors | filter:{ IdFeed: feed.IdFeed }:true" class="error">
+					<h4>{{stat.Date | date:'dd/MM/yyyy HH:mm:ss'}}</h4>
+					{{stat.Message}}
+				</div>
+				<div ng-repeat="stat in statsInsert | filter:{ IdFeed: feed.IdFeed }:true" class="insert">
+					<h4>{{stat.Date | date:'dd/MM/yyyy HH:mm:ss'}}</h4>
+					{{stat.Message}}
+				</div>
 			</div>
 		</div>
 	</body>

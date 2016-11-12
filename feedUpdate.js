@@ -69,6 +69,9 @@ if(logTableInit) {
 		dbLog.run("DROP TABLE IF EXISTS UpdateActions;");
 		dbLog.run("CREATE TABLE UserActions(IdUser INTEGER, Url TEXT, Message Text, Date Text);");
 		dbLog.run("CREATE TABLE UpdateActions(IdFeed INTEGER, LogType Text, Message Text, Date Text);");
+		dbLog.run("CREATE INDEX IX_UpdateFeed ON UpdateActions (IdFeed);");
+		dbLog.run("CREATE INDEX IX_UpdateType ON UpdateActions (IdFeed, LogType);");
+		dbLog.run("CREATE INDEX IX_UpdateDate ON UpdateActions (IdFeed, Date);");
 	});
 	dbLog.close();
 }

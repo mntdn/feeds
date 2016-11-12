@@ -401,9 +401,17 @@ app.post('/testFeed', function (req, res) {
     }
 })
 
-app.get('/feedStats', function (req, res) {
-	console.log(new Date(), "feedStats GET ", req.query);
-	dbLog.all("SELECT *	FROM UpdateActions WHERE LogType ='Error'", function(e,rows){
+app.get('/feedStatsErrors', function (req, res) {
+	console.log(new Date(), "feedStatsErrors GET ", req.query);
+	dbLog.all("SELECT * FROM UpdateActions U WHERE Date = (SELECT MAX(Date) FROM UpdateActions WHERE IdFeed = U.IdFeed AND LogType ='Error') ORDER BY IdFeed;", function(e,rows){
+		if(e) throw e;
+		res.json(rows);
+	});
+})
+
+app.get('/feedStatsInsert', function (req, res) {
+	console.log(new Date(), "feedStatsInsert GET ", req.query);
+	dbLog.all("SELECT * FROM UpdateActions U WHERE Date = (SELECT MAX(Date) FROM UpdateActions WHERE IdFeed = U.IdFeed AND LogType ='insert') ORDER BY IdFeed;", function(e,rows){
 		if(e) throw e;
 		res.json(rows);
 	});
