@@ -367,6 +367,7 @@ angular.module('feedsApp').controller('feedsController', function($scope, $rootS
 					response.data[i].Content = $sce.trustAsHtml(response.data[i].Content);
 				}
 				$scope.feedContent = response.data;
+				$scope.currentNewsNb = response.data.length;
 			});
 	}
 

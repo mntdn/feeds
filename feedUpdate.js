@@ -58,6 +58,7 @@ if(mainTableInit) {
 		db.run("CREATE TABLE IF NOT EXISTS Category(IdCategory INTEGER PRIMARY KEY, Name TEXT, IdUser INTEGER, FOREIGN KEY(IdUser) REFERENCES User(IdUser)); ");
 		db.run("CREATE TABLE IF NOT EXISTS UserFeed(IdUser INTEGER, IdFeed INTEGER, IdCategory INTEGER, NewestFirst INTEGER, FOREIGN KEY(IdUser) REFERENCES User(IdUser), FOREIGN KEY(IdFeed) REFERENCES Feed(IdFeed), FOREIGN KEY(IdCategory) REFERENCES Category(IdCategory), UNIQUE(IdUser, IdFeed));");
 		db.run("CREATE TABLE IF NOT EXISTS FeedContent(IdFeedContent INTEGER PRIMARY KEY, IdFeed INTEGER, PublishedDate INTEGER, Title TEXT, Content TEXT, Url TEXT, Author TEXT, Hash TEXT, FOREIGN KEY(IdFeed) REFERENCES Feed(IdFeed));");
+		db.run("CREATE INDEX IX_FeedContent ON FeedContent(IdFeed);");
 		db.run("CREATE TABLE IF NOT EXISTS UserFeedContent(IdUser INTEGER, IdFeedContent INTEGER, IsRead INTEGER, IsSaved INTEGER, FOREIGN KEY(IdUser) REFERENCES User(IdUser), FOREIGN KEY(IdFeedContent) REFERENCES FeedContent(IdFeedContent), UNIQUE(IdUser, IdFeedContent));");
 	});
 	db.close();
