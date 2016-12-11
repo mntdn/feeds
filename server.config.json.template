@@ -1,0 +1,5 @@
+{
+    "passwordSalt": "salt",
+    "cookieSessionKey1": "key1",
+    "cookieSessionKey2": "key2"
+}

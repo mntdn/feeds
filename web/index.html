@@ -5,14 +5,22 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<link rel="stylesheet" type="text/css" href="css/main.min.css">
 		<link rel="stylesheet" href="css/font-awesome.css">
+		<style>
+			.ng-cloak {
+				display: none !important;
+			}
+		</style>
 	</head>
-	<body>
-		<div ng-controller="loginController" class="loginDialog {{classShow}}">
-			<div class="dialogHead">Login <i class="fa fa-times" style="float: right; cursor: pointer;" ng-click="closeDialog()"></i></div>
+	<body class="ng-cloak" ng-cloak>
+		<div ng-controller="loginController" class="login {{classShow}}">
+			<!-- <div class="dialogHead">Login <i class="fa fa-times" style="float: right; cursor: pointer;" ng-click="closeDialog()"></i></div> -->
+			<h1>Feeds</h1>
 			<div ng-show="loginMode">
-				<input type="text" ng-model="login" placeholder="Login">
-				<input type="password" ng-model="password" placeholder="Password">
-				<button ng-click="doLogin()">OK</button>
+				<form>
+					<input type="text" ng-model="login" placeholder="Login">
+					<input type="password" ng-model="password" placeholder="Password">
+					<button type="submit" ng-click="doLogin()">OK</button>
+				</form>
 			</div>
 			<div ng-show="accountCreateMode">
 				<input type="text" ng-model="createLogin" placeholder="Login">
@@ -20,7 +28,7 @@
 				<input type="password" ng-model="createPasswordCheck" placeholder="Password check">
 				<button ng-click="doCreate()">Create</button>
 			</div>
-			<div ng-click="createAccount()">Create account</div>
+			<span ng-click="createAccount()">Create account</span>
 		</div>
 
 		<div ng-controller="feedsController" class="{{activateMainClass}}" ng-show="loggedIn">
@@ -28,10 +36,10 @@
 			<div class="topMenu">
 				<div class="userPref" ng-click="openDialog()"><i class="fa fa-cog fa-lg"></i> {{currentUser}}</div>
 				<div class="controlButtons">
-					<i ng-click="prevFeed()" class="fa fa-angle-double-left fa-lg button"></i>
-					<i ng-click="prevItem()" class="fa fa-angle-left fa-lg button" ng-show="currentFeedName !== ''"></i>
-					<i ng-click="nextItem(false)" class="fa fa-angle-right fa-lg button" ng-show="currentFeedName !== ''"></i>
-					<i ng-click="nextFeed()" class="fa fa-angle-double-right fa-lg button last"></i>
+					<button><i ng-click="prevFeed()" class="fa fa-angle-double-left fa-lg"></i></button>
+					<button ng-show="currentFeedName !== ''"><i ng-click="prevItem(true)" class="fa fa-angle-left fa-lg"></i></button>
+					<button ng-show="currentFeedName !== ''"><i ng-click="nextItem(true)" class="fa fa-angle-right fa-lg"></i></button>
+					<button><i ng-click="nextFeed()" class="fa fa-angle-double-right fa-lg last"></i></button>
 					{{currentFeedName}}
 					<i ng-click="readAll()" class="fa fa-check-square-o fa-lg" ng-show="currentFeedName !== ''" title="Mark all as read"></i>
 				</div>
@@ -58,18 +66,51 @@
 				<h4 ng-click="loadSaved()">Saved items<span class="nbItems">{{ nbSavedItems }}</span></h4>
 			</div>
 			<div class="centerCol">
-				<div class="feedActionHeader" ng-show="showHeader()">
-					<input type="checkbox" ng-model="autoMarkRead" /> Auto mark as read<br />
-					<input type="checkbox" ng-model="isCurrentFeedSortByNewest" ng-click="changeSortOrder()" /> Newest first
-				</div>
-				<div class="newsItem" ng-class="getItemClass(content)" id="newsItem{{content.IdFeedContent}}" data-id-feed="{{content.IdFeedContent}}" ng-repeat="content in feedContent">
-					<div class="newsHeader">
-						<i class="fa {{getStateRead(content.IsRead)}}" ng-class="content.IsRead ? fa-check-square-o : fa-square-o" ng-click="postRead(content, 1)"></i>&nbsp;
-						<i class="fa fa-bookmark{{getState(content.IsSaved)}}" ng-click="postToggleSave(content)"></i>
-						<h2 id="news{{content.IdFeedContent}}"><a id="newsLink{{content.IdFeedContent}}" href="{{content.Url}}">{{content.Title}}</a></h2>
-						<h3>{{content.PublishedDate | date:'dd/MM/yyyy H:mm:ss'}} -- {{content.Author}}</h3>
+
+				<div class="categoriesMenu" ng-show="showCategoriesConfiguration">
+					<div class="addCategory">
+						<h2>Create a new category</h2>
+						<input type="text" ng-model="categoryToAddName" placeholder="Category name"> <i class="fa fa-plus" ng-click="addCategory()"></i><br />
 					</div>
-					<div class="newsContent" ng-bind-html="content.Content"></div>
+					<div ui-on-Drop="onDrop($event,$data, -1)" ng-repeat="category in categories | filter:{ IdCategory: null }" class="category noCategory" data-id="-1">
+						<h4>
+							{{category.Name}} <input type="text" placeholder="Search..." ng-model="category.searchTerm" />
+						</h4>
+						<div class="feedsConfigContainer" ng-show="category.showContents">
+							<div ui-draggable="true" data-category="-1" drag="feed.IdFeed" ng-repeat="feed in feeds | filter:{ IdCategory: category.IdCategory, Name: category.searchTerm } | limitTo: category.nbItemsShown" class="feedCard">
+								<h5 ng-click="feed.showDetails = !feed.showDetails" title="{{ feed.Name }}">{{ feed.Name }}</h5>
+							</div>
+							<div ng-click="category.nbItemsShown = (category.nbItemsShown === 10 ? 99999 : 10)" class="showMore">{{category.nbItemsShown === 10 ? 'More' : 'Less'}}...</div>
+						</div>
+					</div>
+					<div ui-on-Drop="onDrop($event,$data, category.IdCategory)" ng-repeat="category in categories | filter:{ IdCategory: '' }" class="category {{ category.IdCategory === currentDraggedCategory ? 'currentCategory' : ''}}" data-id="{{category.IdCategory}}">
+						<h4>
+							{{category.Name}} <i class="fa fa-trash" ng-show="category.IdCategory>=0" confirmed-click="deleteCategory(category.IdCategory)" ng-confirm-click="Are you sur you want to delete {{category.Name}}?"></i><br />
+							<input type="text" placeholder="Search..." ng-model="category.searchTerm" />
+						</h4>
+						<div class="feedsConfigContainer" ng-show="category.showContents">
+							<div ui-draggable="true" data-category="{{category.IdCategory}}" drag="feed.IdFeed" ng-repeat="feed in feeds | filter:{ IdCategory: category.IdCategory, Name: category.searchTerm } | limitTo: category.nbItemsShown" class="feedCard">
+								<h5 ng-click="feed.showDetails = !feed.showDetails" title="{{ feed.Name }}">{{ feed.Name }}</h5>
+							</div>
+							<div ng-click="category.nbItemsShown = (category.nbItemsShown === 10 ? 99999 : 10)" class="showMore">{{category.nbItemsShown === 10 ? 'More' : 'Less'}}...</div>
+						</div>
+					</div>
+				</div>
+
+				<div ng-show="showMainFeeds">
+					<div class="feedActionHeader" ng-show="showHeader()">
+						<input type="checkbox" ng-model="autoMarkRead" /> Auto mark as read<br />
+						<input type="checkbox" ng-model="isCurrentFeedSortByNewest" ng-click="changeSortOrder()" /> Newest first
+					</div>
+					<div class="newsItem" ng-class="getItemClass(content)" id="newsItem{{content.IdFeedContent}}" data-id-feed="{{content.IdFeedContent}}" ng-repeat="content in feedContent">
+						<div class="newsHeader">
+							<i class="fa {{getStateRead(content.IsRead)}}" ng-class="content.IsRead ? fa-check-square-o : fa-square-o" ng-click="postRead(content, 1)"></i>&nbsp;
+							<i class="fa fa-bookmark{{getState(content.IsSaved)}}" ng-click="postToggleSave(content)"></i>
+							<h2 id="news{{content.IdFeedContent}}"><a id="newsLink{{content.IdFeedContent}}" href="{{content.Url}}">{{content.Title}}</a></h2>
+							<h3>{{content.PublishedDate | date:'dd/MM/yyyy H:mm:ss'}} -- {{content.Author}}</h3>
+						</div>
+						<div class="newsContent" ng-bind-html="content.Content"></div>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -119,23 +160,6 @@
 			</div>
 		</div>
 
-		<div ng-controller="categoriesController" class="categoriesDialog {{classShow}}">
-			<div class="dialogHead">Organize feeds<i class="fa fa-times" style="float: right; cursor: pointer;" ng-click="closeDialog()"></i></div>
-			<input type="text" ng-model="categoryToAddName" placeholder="New category"> <i class="fa fa-plus" ng-click="addCategory()"></i><br />
-			<div ui-on-Drop="onDrop($event,$data, category.IdCategory)" ng-repeat="category in categories" class="category {{ category.IdCategory === -1 ? 'noCategory' : ''}}" data-id="{{category.IdCategory}}">
-				<h4>
-					{{category.Name}} <i class="fa fa-trash" ng-show="category.IdCategory>=0" confirmed-click="deleteCategory(category.IdCategory)" ng-confirm-click="Are you sur you want to delete {{category.Name}}?"></i><br />
-					<input type="text" placeholder="Search..." ng-model="category.searchTerm" />
-				</h4>
-				<div class="feedsConfigContainer">
-					<div ui-draggable="true" drag="feed.IdFeed" ng-repeat="feed in feeds | filter:{ IdCategory: category.IdCategory, Name: category.searchTerm } | limitTo: category.nbItemsShown" class="feedCard">
-						<h5 ng-click="feed.showDetails = !feed.showDetails" title="{{ feed.Name }}">{{ feed.Name }}</h5>
-					</div>
-					<div ng-click="category.nbItemsShown = (category.nbItemsShown === 10 ? 99999 : 10)" class="showMore">{{category.nbItemsShown === 10 ? 'More' : 'Less'}}...</div>
-				</div>
-			</div>
-		</div>
-
 		<script src="js/angular.min.js"></script>
 		<script src="js/angular-animate.min.js"></script>
 		<script src="js/draganddrop.min.js"></script>
@@ -143,7 +167,6 @@
 		<script src="js/controllers/feeds.js"></script>
 		<script src="js/controllers/login.js"></script>
 		<script src="js/controllers/setup.js"></script>
-		<script src="js/controllers/categories.js"></script>
 		<script src="js/controllers/addFeeds.js"></script>
 	</body>
 </html>

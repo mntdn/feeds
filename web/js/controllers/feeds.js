@@ -1,4 +1,4 @@
-angular.module('feedsApp').controller('feedsController', function($scope, $rootScope, $window, $document, $timeout, $http, $sce) {
+angular.module('feedsApp').controller('feedsController', function($scope, $rootScope, $window, $document, $timeout, $http, $sce, categories) {
 	$scope.currentUser = '';
 
 	$scope.showCollapseMenu = true; // for smartphone, collapsed menu collapsed by default
@@ -13,6 +13,8 @@ angular.module('feedsApp').controller('feedsController', function($scope, $rootS
 	$scope.loggedIn = false; // not logged in by default
 
 	$scope.autoMarkRead = true; // true to mark as read when scrolling and using shortcut keys
+	$scope.showMainFeeds = true;
+	$scope.showCategoriesConfiguration = false;
 
 	$scope.errorCallback = function(r){
 		console.log("erreur", r);
@@ -49,6 +51,11 @@ angular.module('feedsApp').controller('feedsController', function($scope, $rootS
 			.then(function(rez) {
 				$scope.loggedIn = true;
 				rez.data.push({"IdCategory":null, "Name":"None", "ShowEmptyFeeds": 0});
+				for(var i = 0; i < rez.data.length; i++){
+					rez.data[i]["nbItemsShown"] = 10;
+					rez.data[i]["searchTerm"] = '';
+					rez.data[i]["showContents"] = true;
+				}
 				$scope.categories = rez.data;
 			}, $scope.errorCallback);
 		$http.get("/toReadLaterCount")
@@ -317,11 +324,6 @@ angular.module('feedsApp').controller('feedsController', function($scope, $rootS
 		$rootScope.$broadcast('open-add-feeds-dialog', {userName:$scope.currentUser});
 	}
 
-	$scope.openCategoriesDialog = function(){
-		$scope.activateMainClass = "disableInput";
-		$rootScope.$broadcast('open-categories-dialog', {userName:$scope.currentUser});
-	}
-
 	$scope.getState = function(read){
 		return read === 1 ? "" : "-o";
 	}
@@ -404,7 +406,11 @@ angular.module('feedsApp').controller('feedsController', function($scope, $rootS
 	}
 
 	$scope.feedLoad = function(idFeed, initial){
+		// first we make sure it's visible...
+		$scope.showMainFeeds = true;
+		$scope.showCategoriesConfiguration = false;
 		var direction = "DESC";
+
 		for(var i = 0; i < $scope.feeds.length; i++){
 			if($scope.feeds[i].IdFeed === idFeed){
 				direction = $scope.feeds[i].NewestFirst === 1 ? "DESC" : "ASC";
@@ -458,4 +464,89 @@ angular.module('feedsApp').controller('feedsController', function($scope, $rootS
 		$scope.classShow = "";
 		$scope.initFeeds();
 	});
+
+	// -----------------------------------------------------------------
+	//
+	//			Categories management
+	//
+	// -----------------------------------------------------------------
+
+	$scope.openCategoriesDialog = function(){
+		$scope.showMainFeeds = false;
+		$scope.showCategoriesConfiguration = true;
+		$scope.currentFeedName = '';
+	}
+
+	$scope.nbGens = 12;
+
+	$rootScope.$on('ANGULAR_DRAG_START', function(event, args) {
+		var idCategory = parseInt(args.target.dataset.category, 10);
+		$scope.currentDraggedCategory = idCategory;
+		for(var i = 0; i < $scope.categories.length; i++){
+			// if($scope.categories[i].IdCategory !== idCategory){
+				$scope.categories[i].showContents = false;
+			// }
+		}
+	});
+
+	$rootScope.$on('ANGULAR_DRAG_END', function(event, args) {
+		var idCategory = parseInt(args.target.dataset.category, 10);
+		$scope.currentDraggedCategory = -1;
+		for(var i = 0; i < $scope.categories.length; i++){
+			$scope.categories[i].showContents = true;
+		}
+	});
+
+	$scope.onDrop = function($event,$data, idCategory){
+		var idFeed = parseInt($data, 10);
+		$http.post("/changeFeedCategory?IdFeed="+idFeed+"&IdCategory="+idCategory)
+			.then(function(response) {
+				for(var i = 0; i<$scope.feeds.length; i++){
+					if($scope.feeds[i].IdFeed == idFeed){
+						$scope.feeds[i].IdCategory = idCategory;
+						break;
+					}
+				}
+			});
+	}
+
+	$scope.addCategory = function(){
+		categories.add($scope.categoryToAddName).then(function(response) {
+			$scope.categories.push(response.data[0]);
+		});
+	}
+
+	$scope.deleteCategory = function(IdCategory){
+		categories.delete(IdCategory)
+			.then(function(response) {
+				var i;
+				for(i = 0; i < $scope.categories.length; i++)
+					if($scope.categories[i].IdCategory === IdCategory)
+						break;
+				console.log(i, $scope.categories[i]);
+				$scope.categories.splice(i,1);
+			});
+	}
+
+	$scope.addOrRemove = function(currentFeed){
+		if(currentFeed.IsSubscribed === 0){
+			return "plus";
+		} else {
+			return "minus";
+		}
+	}
+
+	$scope.showFeed = function(feed){
+		for(var i = 0; i < $scope.feeds.length; i++){
+			if($scope.feeds[i].IdFeed === feed.IdFeed) {
+				$scope.feeds[i].IsShown = !$scope.feeds[i].IsShown;
+				break;
+			}
+		}
+	}
+
+	$scope.feedChangeCategory = function(feed){
+		$http.post("/changeFeedCategory?IdFeed="+feed.IdFeed+"&IdCategory="+feed.IdCategory)
+			.then(function(response) {});
+	}
 });

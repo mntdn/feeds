@@ -9,14 +9,17 @@ var dbLog = new sqlite.Database('feedsLog.sqlite');
 var feedRead = require("feed-read");
 var app = express();
 
-var pwSalt = 'bec5ba18-384c-453f-8ad7-024fb594fbe1'; // GUID used to salt passwords in the DB
+var fs = require('fs');
+var config = JSON.parse(fs.readFileSync('server.config.json', 'utf8'));
+
+var pwSalt = config.passwordSalt; // GUID used to salt passwords in the DB
 var URLWithAuth = []; // an array of all the URL that needs authentication
 
 app.set('trust proxy', 1) // trust first proxy
 
 app.use(cookieSession({
   name: 'session',
-  keys: ['key1', 'key2']
+  keys: [config.cookieSessionKey1, config.cookieSessionKey2]
 }))
 
 function urlNeedsAuth(url){
@@ -45,7 +48,7 @@ app.use(function (req, res, next) {
 // Tous les fichiers seront servis depuis le r�pertoire web
 app.use(express.static('web'));
 
-// crypto.pbkdf2('1dv4x', pwSalt, 100000, 512, 'sha512', function(err, key) {
+// crypto.pbkdf2('pass', pwSalt, 100000, 512, 'sha512', function(err, key) {
 //     if (err) throw err;
 //     console.log(key.toString('hex'));
 // });
@@ -53,7 +56,7 @@ app.use(express.static('web'));
 // app.get('/nbViews', function (req, res) {
 // 	req.session.views = (req.session.views || 0) + 1;
 // 	console.log(new Date(), "nbViews GET ", req.query);
-// 	crypto.pbkdf2('1dv4x', pwSalt, 100000, 512, 'sha512', function(err, key) {
+// 	crypto.pbkdf2('pass', pwSalt, 100000, 512, 'sha512', function(err, key) {
 // 		if (err) throw err;
 // 		res.json(key.toString('hex'));
 // 	});

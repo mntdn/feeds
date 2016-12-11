@@ -4,4 +4,7 @@
 - Prévoir différents modes d'affichage, au moins pouvoir collapser le titre
 - Mode spécial pour lire les feeds de webcomics
 - proposer des feeds par défaut à l'ouverture de l'app
-- faire une version responsive
+- faire une version responsive (version à part avec Apache Cordova)
+
+- Passer l'ajout des feeds aussi dans le corps principal de l'appli (cf. config des catégories)
+- Pouvoir changer le mot de passe avec un email
