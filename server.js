@@ -1,3 +1,4 @@
+var nodemailer = require('nodemailer');
 var cookieSession = require("cookie-session");
 var crypto = require('crypto');
 var FeedParser = require('feedparser');
@@ -14,6 +15,8 @@ var config = JSON.parse(fs.readFileSync('server.config.json', 'utf8'));
 
 var pwSalt = config.passwordSalt; // GUID used to salt passwords in the DB
 var URLWithAuth = []; // an array of all the URL that needs authentication
+
+var mailResetSalt = config.mailResetSalt; // GUID used to prove the reset is coming from the right person
 
 app.set('trust proxy', 1) // trust first proxy
 
@@ -113,6 +116,44 @@ app.post('/checkLogin', function (req, res) {
 				}
 			});
 		});
+	});
+})
+
+app.post('/sendPasswordMail', function (req, res) {
+    console.log(new Date(), "sendPasswordMail POST ", req.query);
+    db.all("SELECT Name FROM User WHERE Mail = '" + req.query.mail + "'", function(e,rows){
+		if(e) throw e;
+        console.log(rows);
+        crypto.pbkdf2(rows[0].Name, mailResetSalt, 100000, 512, 'sha512', function(error, key) {
+            if (error) throw error;
+            var saltedName = key.toString('hex');
+            var transporter = nodemailer.createTransport();
+            transporter.sendMail({
+               from: 'feeds@' + config.mailHostname,
+               to: req.query.mail,
+               subject: 'Feeds password reset',
+               text: 'Hello !\r\nThis is the code to reset your password : ' + saltedName + '\r\nGo to ' + config.webSiteUrl + ', click on "Enter code" and voilà!'
+            });
+            res.json("OK");
+        });
+	});
+})
+
+app.post('/resetPassword', function (req, res) {
+	console.log(new Date(), "resetPassword GET ", req.query);
+    crypto.pbkdf2(req.query.login, mailResetSalt, 100000, 512, 'sha512', function(err, key) {
+		if (err) throw err;
+		var saltedLogin = key.toString('hex');
+        if(saltedLogin === req.query.c){
+            crypto.pbkdf2(req.query.pass, pwSalt, 100000, 512, 'sha512', function(error, keyPass) {
+        		if (error) throw error;
+        		var saltedPass = keyPass.toString('hex');
+        		db.serialize(function() {
+                    db.run("UPDATE User SET Password = '" + saltedPass + "' WHERE Name = '" + req.query.login + "'");
+        		});
+                res.json("OK");
+        	});
+        }
 	});
 })
 

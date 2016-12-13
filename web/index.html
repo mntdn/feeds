@@ -28,7 +28,18 @@
 				<input type="password" ng-model="createPasswordCheck" placeholder="Password check">
 				<button ng-click="doCreate()">Create</button>
 			</div>
-			<span ng-click="createAccount()">Create account</span>
+			<div ng-show="forgotPasswordMode">
+				<input type="text" ng-model="eMailPassword" placeholder="E-mail">
+				<button ng-click="sendPasswordMail()">Send reset mail</button>
+			</div>
+			<div ng-show="enterCodeMode">
+				<input type="text" ng-model="resetCode" placeholder="Code">
+				<input type="text" ng-model="resetLogin" placeholder="Login">
+				<input type="password" ng-model="resetPassword" placeholder="New password">
+				<input type="password" ng-model="resetPasswordConfirm" placeholder="New password confirmation">
+				<button ng-click="changePassword()">Change password</button>
+			</div>
+			<span ng-click="createAccount()">Create account</span> | <span ng-click="forgotPassword()">Forgot password</span> | <span ng-click="enterCode()">Enter code</span>
 		</div>
 
 		<div ng-controller="feedsController" class="{{activateMainClass}}" ng-show="loggedIn">

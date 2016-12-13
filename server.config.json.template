@@ -1,5 +1,8 @@
 {
     "passwordSalt": "salt",
+    "mailResetSalt": "salty",
     "cookieSessionKey1": "key1",
-    "cookieSessionKey2": "key2"
+    "cookieSessionKey2": "key2",
+    "webSiteUrl": "url",
+    "mailHostname": "host"
 }
