@@ -5,11 +5,6 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<link rel="stylesheet" type="text/css" href="css/main.min.css">
 		<link rel="stylesheet" href="css/font-awesome.css">
-		<style>
-			.ng-cloak {
-				display: none !important;
-			}
-		</style>
 	</head>
 	<body class="ng-cloak" ng-cloak>
 		<div ng-controller="loginController" class="login {{classShow}}">
@@ -20,6 +15,7 @@
 					<input type="text" ng-model="login" placeholder="Login">
 					<input type="password" ng-model="password" placeholder="Password">
 					<button type="submit" ng-click="doLogin()">OK</button>
+					<div class="errorMessage" ng-show="loginError">{{errorMessage}}</div>
 				</form>
 			</div>
 			<div ng-show="accountCreateMode">
@@ -47,10 +43,10 @@
 			<div class="topMenu">
 				<div class="userPref" ng-click="openDialog()"><i class="fa fa-cog fa-lg"></i> {{currentUser}}</div>
 				<div class="controlButtons">
-					<button><i ng-click="prevFeed()" class="fa fa-angle-double-left fa-lg"></i></button>
-					<button ng-show="currentFeedName !== ''"><i ng-click="prevItem(true)" class="fa fa-angle-left fa-lg"></i></button>
-					<button ng-show="currentFeedName !== ''"><i ng-click="nextItem(true)" class="fa fa-angle-right fa-lg"></i></button>
-					<button><i ng-click="nextFeed()" class="fa fa-angle-double-right fa-lg last"></i></button>
+					<button ng-click="prevFeed()"><i class="fa fa-angle-double-left fa-lg"></i></button>
+					<button ng-show="currentFeedName !== ''" ng-click="prevItem(true)" ><i class="fa fa-angle-left fa-lg"></i></button>
+					<button ng-show="currentFeedName !== ''" ng-click="nextItem(true)"><i class="fa fa-angle-right fa-lg"></i></button>
+					<button ng-click="nextFeed()"><i class="fa fa-angle-double-right fa-lg last"></i></button>
 					{{currentFeedName}}
 					<i ng-click="readAll()" class="fa fa-check-square-o fa-lg" ng-show="currentFeedName !== ''" title="Mark all as read"></i>
 				</div>
@@ -108,6 +104,36 @@
 					</div>
 				</div>
 
+				<div class="addFeedsMenu" ng-show="showAddFeedsConfiguration">
+					<input type="hidden" value="{{currentFeedId}}" />
+					<div class="searchFeeds">
+						<h2>Search in Feeds</h2>
+						URL <input type="text" ng-model="feedToAddUrl" placeholder="Feed's URL">
+						Name <input type="text" ng-model="feedToAddName" placeholder="Feed's name">
+						<i class="fa fa-plus" ng-click="addFeed()"></i>&nbsp;|&nbsp;
+						<i class="fa fa-check-circle" ng-click="feedTest()"></i>
+						<div class="windowMsgBox" ng-show="showMessageBox">
+							<i class="fa fa-times" style="float: right" ng-click="showMessageBox = false"></i>
+							<div class="error" ng-show="feedError">
+								{{ errorMessage }}
+							</div>
+							<div class="success" ng-show="!feedError">
+								{{ testNumber }} articles<br />
+								1st ({{testDatePublished}}): <a href="{{testUrl}}">{{testTitle}}</a>
+							</div>
+						</div>
+					</div>
+					<div class="feedsConfigContainer">
+						<div ng-repeat="feed in allFeeds | filter:{ Url: feedToAddUrl, Name: feedToAddName } | limitTo: 12" class="feedCard">
+							<h5><a href="{{feed.Url}}" target="_blank">{{ feed.Name }}</a></h5>
+							<div ng-click="feedChangeSubscription(feed)"><i class="fa fa fa-{{addOrRemove(feed)}}"></i>
+								<span ng-show="feed.IsSubscribed">Unsubscribe</span>
+								<span ng-show="!feed.IsSubscribed">Subscribe</span>
+							</div>
+						</div>
+					</div>
+				</div>
+
 				<div ng-show="showMainFeeds">
 					<div class="feedActionHeader" ng-show="showHeader()">
 						<input type="checkbox" ng-model="autoMarkRead" /> Auto mark as read<br />
@@ -133,43 +159,6 @@
 			</center>
 		</div>
 
-		<div ng-controller="addFeedsController" class="addFeedsDialog {{classShow}}">
-			<div class="dialogHead">Add feeds <i class="fa fa-times" style="float: right; cursor: pointer;" ng-click="closeDialog()"></i></div>
-			<input type="hidden" value="{{currentFeedId}}" />
-			URL <input type="text" ng-model="feedToAddUrl" placeholder="URL du feed">
-			Name <input type="text" ng-model="feedToAddName" placeholder="Nom du feed">
-			<i class="fa fa-plus" ng-click="addFeed()"></i>&nbsp;|&nbsp;
-			<i class="fa fa-check-circle" ng-click="feedTest()"></i>
-			<div class="windowMsgBox" ng-show="showMessageBox">
-				<i class="fa fa-times" style="float: right" ng-click="showMessageBox = false"></i>
-				<div class="error" ng-show="feedError">
-					{{ errorMessage }}
-				</div>
-				<div class="success" ng-show="!feedError">
-					{{ testNumber }} articles<br />
-					1st ({{testDatePublished}}): <a href="{{testUrl}}">{{testTitle}}</a>
-				</div>
-			</div>
-			<div class="feedsConfigContainer">
-				<div ng-repeat="feed in feeds | filter:{ Url: feedToAddUrl, Name: feedToAddName } | limitTo: 9" class="feedCard">
-					<h5><a href="{{feed.Url}}" target="_blank">{{ feed.Name }}</a></h5>
-					<!-- <i class="fa fa-{{addOrRemove(feed)}}-circle" ng-click="feedChangeSubscription(feed)"></i> -->
-					<div ng-click="feedChangeSubscription(feed)"><i class="fa fa fa-{{addOrRemove(feed)}}"></i>
-						<span ng-show="feed.IsSubscribed">Se désabonner</span>
-						<span ng-show="!feed.IsSubscribed">S'abonner</span>
-					</div>
-					<!-- <div ng-show="feed.IsSubscribed">
-						Categorie <select ng-model="feed.IdCategory" ng-change="feedChangeCategory(feed)"
-							ng-options="category.IdCategory as category.Name for category in categories">
-						</select>
-					</div>
-					URL <input type="text" ng-model="feed.Url"><br />
-					Nom <input type="text" ng-model="feed.Name"><br /> -->
-					<!-- <i class="fa fa-pencil" ng-click="editFeed(feed)"></i>
-					<i class="fa fa-trash" confirmed-click="deleteFeed(feed)" ng-confirm-click="Are you sur you want to delete {{feed.Name}}?"></i> -->
-				</div>
-			</div>
-		</div>
 
 		<script src="js/angular.min.js"></script>
 		<script src="js/angular-animate.min.js"></script>

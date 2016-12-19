@@ -4,6 +4,7 @@ angular.module('feedsApp').controller('loginController', function($scope, $rootS
 	$scope.accountCreateMode = false;
 	$scope.forgotPasswordMode = false;
 	$scope.enterCodeMode = false;
+	$scope.loginError = false;
 
 	$scope.$on('open-login', function(event, args) {
 		$scope.classShow = "";
@@ -31,12 +32,16 @@ angular.module('feedsApp').controller('loginController', function($scope, $rootS
 	}
 
 	$scope.doLogin = function(){
-		$scope.classShow = 'hide';
 		$http.post("/checkLogin?name="+$scope.login+"&pass="+$scope.password)
 			.then(function(response) {
-				$rootScope.$broadcast('login');
+				if(response.data.status === 'OK'){
+					$scope.classShow = 'hide';
+					$rootScope.$broadcast('login');
+				} else {
+					$scope.loginError = true;
+					$scope.errorMessage = response.data.errorMessage || 'Error';
+				}
 			});
-		// $rootScope.$broadcast('login', {user: $scope.login});
 	}
 
 	$scope.doCreate = function(){
@@ -57,9 +62,11 @@ angular.module('feedsApp').controller('loginController', function($scope, $rootS
 	}
 
 	$scope.changePassword = function() {
-		$http.post("/resetPassword?login="+$scope.resetLogin+"&pass="+$scope.resetPassword+"&c="+$scope.resetCode)
-			.then(function(response) {
-				console.log(response);
-			});
+		if($scope.resetPassword === $scope.resetPasswordConfirm){
+			$http.post("/resetPassword?login="+$scope.resetLogin+"&pass="+$scope.resetPassword+"&c="+$scope.resetCode)
+				.then(function(response) {
+					console.log(response);
+				});
+		}
 	}
 });

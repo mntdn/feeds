@@ -17,7 +17,7 @@ angular.module('feedsApp').controller('feedsController', function($scope, $rootS
 	$scope.showCategoriesConfiguration = false;
 
 	$scope.errorCallback = function(r){
-		console.log("erreur", r);
+		// console.log("erreur", r);
 		$scope.loggedIn = false;
 		$rootScope.$broadcast('open-login');
 	}
@@ -65,7 +65,12 @@ angular.module('feedsApp').controller('feedsController', function($scope, $rootS
 			}, $scope.errorCallback);
 	}
 
-	$scope.initFeeds();
+	$http.get("/getUsername")
+		.then(function(rez) {
+			$scope.loggedIn = true;
+			$scope.initFeeds();
+		}, $scope.errorCallback);
+	// $scope.initFeeds();
 
 	$scope.logout = function(){
 		$http.get("/logout")
@@ -265,9 +270,11 @@ angular.module('feedsApp').controller('feedsController', function($scope, $rootS
 		}
 	};
 
+	$scope.activateMainClass = "";
+
     $document.bind("keypress", function(event) {
 		// listening to events only if not in configuration mode
-		if($scope.activateMainClass === ""){
+		if($scope.activateMainClass === "" && $scope.loggedIn){
 			if(event.shiftKey && event.code === "KeyJ"){
 				// SHIFT+J ---> next feed with unread items
 				$scope.nextFeed();
@@ -295,8 +302,6 @@ angular.module('feedsApp').controller('feedsController', function($scope, $rootS
 		}
     });
 
-	$scope.activateMainClass = "";
-
 	$scope.changeNbRead = function(direction){
 		angular.forEach($scope.feeds, function(v, k){
 			if(v.IdFeed === $scope.currentFeedId)
@@ -317,11 +322,6 @@ angular.module('feedsApp').controller('feedsController', function($scope, $rootS
 	$scope.openDialog = function(){
 		$scope.activateMainClass = "disableInput";
 		$rootScope.$broadcast('open-dialog', {userName:$scope.currentUser});
-	}
-
-    $scope.openAddFeedsDialog = function(){
-		$scope.activateMainClass = "disableInput";
-		$rootScope.$broadcast('open-add-feeds-dialog', {userName:$scope.currentUser});
 	}
 
 	$scope.getState = function(read){
@@ -409,6 +409,7 @@ angular.module('feedsApp').controller('feedsController', function($scope, $rootS
 		// first we make sure it's visible...
 		$scope.showMainFeeds = true;
 		$scope.showCategoriesConfiguration = false;
+		$scope.showAddFeedsConfiguration = false;
 		var direction = "DESC";
 
 		for(var i = 0; i < $scope.feeds.length; i++){
@@ -467,6 +468,58 @@ angular.module('feedsApp').controller('feedsController', function($scope, $rootS
 
 	// -----------------------------------------------------------------
 	//
+	//			Feeds management
+	//
+	// -----------------------------------------------------------------
+
+	$scope.openAddFeedsDialog = function(){
+		$scope.showMainFeeds = false;
+		$scope.showCategoriesConfiguration = false;
+		$scope.showAddFeedsConfiguration = true;
+		$scope.currentFeedName = '';
+		$http.get("/allFeedsList")
+		.then(function(rez) {
+			$scope.allFeeds = rez.data;
+		});
+	}
+
+	$scope.feedTest = function(){
+		$http.post("/testFeed?url="+$scope.feedToAddUrl)
+			.then(function(response) {
+				$scope.showMessageBox = true;
+				$scope.feedError = true;
+				if(response.data.err){
+					$scope.errorMessage = response.data.err;
+				} else {
+					$scope.feedError = false;
+					$scope.testNumber = response.data.nbArticles;
+					$scope.testDatePublished = response.data.firstPublished;
+					$scope.testTitle = response.data.firstTitle;
+					$scope.testUrl = response.data.firstLink;
+				}
+			});
+	}
+
+	$scope.addFeed = function(){
+		// removing everything after the #
+		$scope.feedToAddUrl = $scope.feedToAddUrl.replace(/#.*/, '');
+		$http.post("/testFeed?url="+$scope.feedToAddUrl)
+			.then(function(response) {
+				if(response.data.err){
+					$scope.showMessageBox = true;
+					$scope.feedError = true;
+					$scope.errorMessage = response.data.err;
+				} else {
+					$http.post("/addFeed?Url="+$scope.feedToAddUrl+"&Name="+$scope.feedToAddName)
+						.then(function(response) {
+							$scope.feeds.push(response.data[0]);
+						});
+				}
+			});
+	}
+
+	// -----------------------------------------------------------------
+	//
 	//			Categories management
 	//
 	// -----------------------------------------------------------------
@@ -474,6 +527,7 @@ angular.module('feedsApp').controller('feedsController', function($scope, $rootS
 	$scope.openCategoriesDialog = function(){
 		$scope.showMainFeeds = false;
 		$scope.showCategoriesConfiguration = true;
+		$scope.showAddFeedsConfiguration = false;
 		$scope.currentFeedName = '';
 	}
 

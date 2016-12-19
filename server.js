@@ -51,22 +51,6 @@ app.use(function (req, res, next) {
 // Tous les fichiers seront servis depuis le r�pertoire web
 app.use(express.static('web'));
 
-// crypto.pbkdf2('pass', pwSalt, 100000, 512, 'sha512', function(err, key) {
-//     if (err) throw err;
-//     console.log(key.toString('hex'));
-// });
-
-// app.get('/nbViews', function (req, res) {
-// 	req.session.views = (req.session.views || 0) + 1;
-// 	console.log(new Date(), "nbViews GET ", req.query);
-// 	crypto.pbkdf2('pass', pwSalt, 100000, 512, 'sha512', function(err, key) {
-// 		if (err) throw err;
-// 		res.json(key.toString('hex'));
-// 	});
-//
-// 	res.json(req.session);
-// })
-
 URLWithAuth.push("getUsername");
 app.get('/getUsername', function (req, res) {
 	console.log(new Date(), "getUsername GET ", req.query);
@@ -99,7 +83,6 @@ app.post('/checkLogin', function (req, res) {
 		db.serialize(function() {
 			var userName = req.query.name;
 			db.all("SELECT Password, IdUser FROM User WHERE Name = '" + req.query.name + "'", function(e,rows){
-				console.log("CHeck");
 				if(e) throw e;
 				if(rows.length > 0){
 					// we found someone
@@ -107,13 +90,14 @@ app.post('/checkLogin', function (req, res) {
 						// and it's the good password
 						req.session.userName = userName;
 						req.session.userId = rows[0]["IdUser"];
-						res.json("OK");
+						res.json({status: 'OK'});
 					}
 					else {
-						console.log("Perdu...");
+                        res.json({status: 'Error', errorMessage:'Wrong password'});
 					}
-
-				}
+				} else {
+                    res.json({status: 'Error', errorMessage:'No user with this login'});
+                }
 			});
 		});
 	});
@@ -127,6 +111,7 @@ app.post('/sendPasswordMail', function (req, res) {
         crypto.pbkdf2(rows[0].Name, mailResetSalt, 100000, 512, 'sha512', function(error, key) {
             if (error) throw error;
             var saltedName = key.toString('hex');
+            console.log(saltedName);
             var transporter = nodemailer.createTransport();
             transporter.sendMail({
                from: 'feeds@' + config.mailHostname,
