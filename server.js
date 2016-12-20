@@ -63,14 +63,36 @@ app.get('/logout', function (req, res) {
     res.json("OK");
 })
 
+app.post('/checkUsername', function (req, res) {
+	console.log(new Date(), "checkUsername POST ", req.query);
+	db.serialize(function() {
+		var userName = req.query.name;
+		db.all("SELECT 1 FROM User WHERE Name = '" + req.query.name + "'", function(e,rows){
+			if(e) throw e;
+			if(rows.length > 0){
+                res.json({status: 'Error'});
+			} else {
+                res.json({status: 'OK'});
+            }
+		});
+	});
+})
+
 app.post('/createAccount', function (req, res) {
 	console.log(new Date(), "createAccount POST ", req.query);
 	crypto.pbkdf2(req.query.pass, pwSalt, 100000, 512, 'sha512', function(err, key) {
 		if (err) throw err;
 		var saltedPass = key.toString('hex');
 		db.serialize(function() {
-			db.run("INSERT INTO User (Name, Password) VALUES ('" + req.query.name + "', '"+saltedPass+"')");
+			db.run("INSERT INTO User (Name, Password, Mail) VALUES ('" + req.query.name + "', '"+saltedPass+"', '"+req.query.email+"')");
 		});
+        var transporter = nodemailer.createTransport();
+        transporter.sendMail({
+           from: 'feeds@' + config.mailHostname,
+           to: req.query.email,
+           subject: 'Welcome to Feeds',
+           text: 'Welcome to feeds !\r\nGo to ' + config.webSiteUrl + ' and enjoy feeds browsing!\r\nThe Feeds team'
+        });
         res.json("OK");
 	});
 })
@@ -111,7 +133,6 @@ app.post('/sendPasswordMail', function (req, res) {
         crypto.pbkdf2(rows[0].Name, mailResetSalt, 100000, 512, 'sha512', function(error, key) {
             if (error) throw error;
             var saltedName = key.toString('hex');
-            console.log(saltedName);
             var transporter = nodemailer.createTransport();
             transporter.sendMail({
                from: 'feeds@' + config.mailHostname,

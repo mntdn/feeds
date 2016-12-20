@@ -7,4 +7,8 @@
 - faire une version responsive (version à part avec Apache Cordova)
 
 - Passer l'ajout des feeds aussi dans le corps principal de l'appli (cf. config des catégories)
-- Pouvoir changer le mot de passe avec un email
+- Pouvoir changer le mot de passe avec un email de façon agréable
+
+
+
+++++++++ BUGS

@@ -274,7 +274,7 @@ angular.module('feedsApp').controller('feedsController', function($scope, $rootS
 
     $document.bind("keypress", function(event) {
 		// listening to events only if not in configuration mode
-		if($scope.activateMainClass === "" && $scope.loggedIn){
+		if($scope.activateMainClass === "" && $scope.loggedIn && $scope.showMainFeeds){
 			if(event.shiftKey && event.code === "KeyJ"){
 				// SHIFT+J ---> next feed with unread items
 				$scope.nextFeed();
@@ -512,10 +512,26 @@ angular.module('feedsApp').controller('feedsController', function($scope, $rootS
 				} else {
 					$http.post("/addFeed?Url="+$scope.feedToAddUrl+"&Name="+$scope.feedToAddName)
 						.then(function(response) {
-							$scope.feeds.push(response.data[0]);
+							$scope.allFeeds.push(response.data[0]);
 						});
 				}
 			});
+	}
+
+	$scope.feedChangeSubscription = function(currentFeed) {
+		if(currentFeed.IsSubscribed === 0){
+			// not subscribed yet, so we begin by subscribing
+			$http.post("/subscribeToFeed?IdFeed="+currentFeed.IdFeed)
+				.then(function(response) {
+					currentFeed.IsSubscribed = 1;
+				});
+		} else {
+			// already subscribed, so we unsubscribe
+			$http.post("/unsubscribeFromFeed?IdFeed="+currentFeed.IdFeed)
+				.then(function(response) {
+					currentFeed.IsSubscribed = 0;
+				});
+		}
 	}
 
 	// -----------------------------------------------------------------

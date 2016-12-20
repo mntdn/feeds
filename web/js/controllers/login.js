@@ -6,6 +6,11 @@ angular.module('feedsApp').controller('loginController', function($scope, $rootS
 	$scope.enterCodeMode = false;
 	$scope.loginError = false;
 
+	$scope.createLoginAlreadyUsed = false;
+	$scope.createPassNoMatch = false;
+	$scope.createEmailNotGood = false;
+	$scope.createPassEmpty = false;
+
 	$scope.$on('open-login', function(event, args) {
 		$scope.classShow = "";
 	});
@@ -45,13 +50,37 @@ angular.module('feedsApp').controller('loginController', function($scope, $rootS
 	}
 
 	$scope.doCreate = function(){
-		if($scope.createPassword === $scope.createPasswordCheck){
-			$http.post("/createAccount?name="+$scope.createLogin+"&pass="+$scope.createPassword)
-				.then(function(response) {
-					$scope.loginMode = true;
-					$scope.accountCreateMode = false;
-				});
-		}
+		var createOK = true;
+		$scope.createLoginAlreadyUsed = false;
+		$scope.createPassNoMatch = false;
+		$scope.createEmailNotGood = false;
+		$scope.createPassEmpty = false;
+		$http.post("/checkUsername?name="+$scope.createLogin)
+			.then(function(rez){
+				if(rez.data.status === 'OK'){
+					if($scope.createPassword === ""){
+						$scope.createPassEmpty = true;
+						createOK = false;
+					}
+					if($scope.createPassword !== $scope.createPasswordCheck){
+						$scope.createPassNoMatch = true;
+						createOK = false;
+					}
+					if(/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.exec($scope.createEmail) === null){
+						$scope.createEmailNotGood = true;
+						createOK = false;
+					}
+					if(createOK){
+						$http.post("/createAccount?name="+$scope.createLogin+"&pass="+$scope.createPassword+"&email="+$scope.createEmail)
+							.then(function(response) {
+								$scope.loginMode = true;
+								$scope.accountCreateMode = false;
+							});
+					}
+				} else {
+					$scope.createLoginAlreadyUsed = true;
+				}
+			});
 	}
 
 	$scope.sendPasswordMail = function(){

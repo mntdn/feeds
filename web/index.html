@@ -20,8 +20,13 @@
 			</div>
 			<div ng-show="accountCreateMode">
 				<input type="text" ng-model="createLogin" placeholder="Login">
+				<div ng-show="createLoginAlreadyUsed" class="errorMessage">Login already taken</div>
+				<input type="text" ng-model="createEmail" placeholder="EMail">
+				<div ng-show="createEmailNotGood" class="errorMessage">E-mail not good</div>
 				<input type="password" ng-model="createPassword" placeholder="Password">
 				<input type="password" ng-model="createPasswordCheck" placeholder="Password check">
+				<div ng-show="createPassNoMatch" class="errorMessage">Passwords don't match</div>
+				<div ng-show="createPassEmpty" class="errorMessage">You have to provide a password</div>
 				<button ng-click="doCreate()">Create</button>
 			</div>
 			<div ng-show="forgotPasswordMode">
@@ -126,7 +131,7 @@
 					<div class="feedsConfigContainer">
 						<div ng-repeat="feed in allFeeds | filter:{ Url: feedToAddUrl, Name: feedToAddName } | limitTo: 12" class="feedCard">
 							<h5><a href="{{feed.Url}}" target="_blank">{{ feed.Name }}</a></h5>
-							<div ng-click="feedChangeSubscription(feed)"><i class="fa fa fa-{{addOrRemove(feed)}}"></i>
+							<div ng-click="feedChangeSubscription(feed)"><i class="fa" ng-class="feed.IsSubscribed === 0 ? 'fa-plus' : 'fa-minus'"></i>
 								<span ng-show="feed.IsSubscribed">Unsubscribe</span>
 								<span ng-show="!feed.IsSubscribed">Subscribe</span>
 							</div>
