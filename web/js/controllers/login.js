@@ -37,7 +37,7 @@ angular.module('feedsApp').controller('loginController', function($scope, $rootS
 	}
 
 	$scope.doLogin = function(){
-		$http.post("/checkLogin?name="+$scope.login+"&pass="+$scope.password)
+		$http.post("/checkLogin", {name:$scope.login, pass:$scope.password})
 			.then(function(response) {
 				if(response.data.status === 'OK'){
 					$scope.classShow = 'hide';
@@ -71,7 +71,7 @@ angular.module('feedsApp').controller('loginController', function($scope, $rootS
 						createOK = false;
 					}
 					if(createOK){
-						$http.post("/createAccount?name="+$scope.createLogin+"&pass="+$scope.createPassword+"&email="+$scope.createEmail)
+						$http.post("/createAccount", {name: $scope.createLogin, pass: $scope.createPassword, email: $scope.createEmail})
 							.then(function(response) {
 								$scope.loginMode = true;
 								$scope.accountCreateMode = false;
@@ -92,7 +92,7 @@ angular.module('feedsApp').controller('loginController', function($scope, $rootS
 
 	$scope.changePassword = function() {
 		if($scope.resetPassword === $scope.resetPasswordConfirm){
-			$http.post("/resetPassword?login="+$scope.resetLogin+"&pass="+$scope.resetPassword+"&c="+$scope.resetCode)
+			$http.post("/resetPassword", {login: $scope.resetLogin, pass:$scope.resetPassword, c:$scope.resetCode})
 				.then(function(response) {
 					console.log(response);
 				});

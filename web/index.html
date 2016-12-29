@@ -66,7 +66,7 @@
 				<div ng-repeat="category in categories">
 					<h4 ng-click="category.Fold = !category.Fold">{{category.Name}} <span>{{feedsTotal(category.IdCategory)}}</span></h4>
 					<ul ng-show="!category.Fold" class="feedList">
-						<li ng-repeat="feed in feeds | filter:{ IdCategory: category.IdCategory }" ng-show="feed.NbItems > category.ShowEmptyFeeds" ng-class="feed.IdFeed == currentFeedId ? 'current' : ''">
+						<li ng-repeat="feed in feeds | filter:{ IdCategory: category.IdCategory } : true" ng-show="feed.NbItems > category.ShowEmptyFeeds" ng-class="feed.IdFeed == currentFeedId ? 'current' : ''">
 							<a href="" ng-click="feedLoad(feed.IdFeed, true)" title="{{ feed.Name }}">{{ feed.Name }}</a><span class="nbItems">{{ feed.NbItems }}</span>
 						</li>
 					</ul>

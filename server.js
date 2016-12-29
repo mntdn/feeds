@@ -7,8 +7,8 @@ var express = require('express');
 var sqlite = require("sqlite3");
 var db = new sqlite.Database('feeds.sqlite');
 var dbLog = new sqlite.Database('feedsLog.sqlite');
-var feedRead = require("feed-read");
 var app = express();
+var bodyParser = require('body-parser');
 
 var fs = require('fs');
 var config = JSON.parse(fs.readFileSync('server.config.json', 'utf8'));
@@ -19,6 +19,8 @@ var URLWithAuth = []; // an array of all the URL that needs authentication
 var mailResetSalt = config.mailResetSalt; // GUID used to prove the reset is coming from the right person
 
 app.set('trust proxy', 1) // trust first proxy
+
+app.use(bodyParser.json());
 
 app.use(cookieSession({
   name: 'session',
@@ -79,17 +81,17 @@ app.post('/checkUsername', function (req, res) {
 })
 
 app.post('/createAccount', function (req, res) {
-	console.log(new Date(), "createAccount POST ", req.query);
-	crypto.pbkdf2(req.query.pass, pwSalt, 100000, 512, 'sha512', function(err, key) {
+	console.log(new Date(), "createAccount POST ", req.body);
+	crypto.pbkdf2(req.body.pass, pwSalt, 100000, 512, 'sha512', function(err, key) {
 		if (err) throw err;
 		var saltedPass = key.toString('hex');
 		db.serialize(function() {
-			db.run("INSERT INTO User (Name, Password, Mail) VALUES ('" + req.query.name + "', '"+saltedPass+"', '"+req.query.email+"')");
+			db.run("INSERT INTO User (Name, Password, Mail) VALUES ('" + req.body.name + "', '"+saltedPass+"', '"+req.body.email+"')");
 		});
         var transporter = nodemailer.createTransport();
         transporter.sendMail({
            from: 'feeds@' + config.mailHostname,
-           to: req.query.email,
+           to: req.body.email,
            subject: 'Welcome to Feeds',
            text: 'Welcome to feeds !\r\nGo to ' + config.webSiteUrl + ' and enjoy feeds browsing!\r\nThe Feeds team'
         });
@@ -98,13 +100,13 @@ app.post('/createAccount', function (req, res) {
 })
 
 app.post('/checkLogin', function (req, res) {
-	console.log(new Date(), "checkLogin POST ", req.query);
-	crypto.pbkdf2(req.query.pass, pwSalt, 100000, 512, 'sha512', function(err, key) {
+	console.log(new Date(), "checkLogin POST ", req.body);
+	crypto.pbkdf2(req.body.pass, pwSalt, 100000, 512, 'sha512', function(err, key) {
 		if (err) throw err;
 		var saltedPass = key.toString('hex');
 		db.serialize(function() {
-			var userName = req.query.name;
-			db.all("SELECT Password, IdUser FROM User WHERE Name = '" + req.query.name + "'", function(e,rows){
+			var userName = req.body.name;
+			db.all("SELECT Password, IdUser FROM User WHERE Name = '" + userName + "'", function(e,rows){
 				if(e) throw e;
 				if(rows.length > 0){
 					// we found someone
@@ -146,16 +148,16 @@ app.post('/sendPasswordMail', function (req, res) {
 })
 
 app.post('/resetPassword', function (req, res) {
-	console.log(new Date(), "resetPassword GET ", req.query);
-    crypto.pbkdf2(req.query.login, mailResetSalt, 100000, 512, 'sha512', function(err, key) {
+	console.log(new Date(), "resetPassword GET ", req.body);
+    crypto.pbkdf2(req.body.login, mailResetSalt, 100000, 512, 'sha512', function(err, key) {
 		if (err) throw err;
 		var saltedLogin = key.toString('hex');
-        if(saltedLogin === req.query.c){
-            crypto.pbkdf2(req.query.pass, pwSalt, 100000, 512, 'sha512', function(error, keyPass) {
+        if(saltedLogin === req.body.c){
+            crypto.pbkdf2(req.body.pass, pwSalt, 100000, 512, 'sha512', function(error, keyPass) {
         		if (error) throw error;
         		var saltedPass = keyPass.toString('hex');
         		db.serialize(function() {
-                    db.run("UPDATE User SET Password = '" + saltedPass + "' WHERE Name = '" + req.query.login + "'");
+                    db.run("UPDATE User SET Password = '" + saltedPass + "' WHERE Name = '" + req.body.login + "'");
         		});
                 res.json("OK");
         	});

@@ -5,6 +5,7 @@
   "main": "server.js",
   "dependencies": {
     "express": "^4.13.3",
+    "body-parser": "^1.15.2",
     "cookie-session": "^2.0.0-alpha.1",
     "request": "^2.76.0",
     "feedparser": "^1.1.5",
