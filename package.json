@@ -15,8 +15,8 @@
   },
   "devDependencies": {},
   "scripts": {
-    "test": "node server.js",
-    "start": "node server.js"
+    "start": "server.js",
+    "stop": "pkill --signal SIGINT mntdnFeeds"
   },
   "repository": {
     "type": "git",

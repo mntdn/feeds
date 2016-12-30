@@ -18,6 +18,8 @@ var URLWithAuth = []; // an array of all the URL that needs authentication
 
 var mailResetSalt = config.mailResetSalt; // GUID used to prove the reset is coming from the right person
 
+process.title = 'mntdnFeeds';
+
 app.set('trust proxy', 1) // trust first proxy
 
 app.use(bodyParser.json());
