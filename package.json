@@ -15,7 +15,7 @@
   },
   "devDependencies": {},
   "scripts": {
-    "start": "server.js",
+    "start": "node server.js &",
     "stop": "pkill --signal SIGINT mntdnFeeds"
   },
   "repository": {
