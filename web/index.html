@@ -146,7 +146,7 @@
 					</div>
 					<div class="newsItem" ng-class="getItemClass(content)" id="newsItem{{content.IdFeedContent}}" data-id-feed="{{content.IdFeedContent}}" ng-repeat="content in feedContent">
 						<div class="newsHeader">
-							<i class="fa {{getStateRead(content.IsRead)}}" ng-class="content.IsRead ? fa-check-square-o : fa-square-o" ng-click="postRead(content, 1)"></i>&nbsp;
+							<i class="fa" ng-class="content.IsRead ? 'fa-check-square-o' : 'fa-square-o'" ng-click="postRead(content, 1)"></i>&nbsp;
 							<i class="fa fa-bookmark{{getState(content.IsSaved)}}" ng-click="postToggleSave(content)"></i>
 							<h2 id="news{{content.IdFeedContent}}"><a id="newsLink{{content.IdFeedContent}}" href="{{content.Url}}">{{content.Title}}</a></h2>
 							<h3>{{content.PublishedDate | date:'dd/MM/yyyy H:mm:ss'}} -- {{content.Author}}</h3>
