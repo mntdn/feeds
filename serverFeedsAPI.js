@@ -97,6 +97,18 @@ app.post('/changeRead', function (req, res) {
 	res.json("OK");
 })
 
+app.post('/changeSaved', function (req, res) {
+	console.log(new Date(), "changeSaved POST", req.body);
+    var userId = 1;
+	db.serialize(function() {
+		db.run("INSERT OR IGNORE INTO UserFeedContent (IdUser, IdFeedContent, IsSaved) \
+			VALUES (" + userId + ", "+ req.body.IdFC +", "+ req.body.save +")");
+		db.run("UPDATE UserFeedContent SET IsSaved = "+ req.body.save +" \
+			WHERE IdUser = " + userId + " AND IdFeedContent = "+ req.body.IdFC);
+	});
+	res.json("OK");
+})
+
 var server = app.listen(8181, function () {
   var host = server.address().address
   var port = server.address().port
