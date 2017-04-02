@@ -8,11 +8,16 @@ var fs = require('fs');
 var db = new sqlite.Database('feeds.sqlite');
 var dbLog = new sqlite.Database('feedsLog.sqlite');
 
+var fs = require('fs');
+var config = JSON.parse(fs.readFileSync('server.config.json', 'utf8'));
+
 var mainTableInit = false, logTableInit = false, isVerbose = false;
 
 var nbStmt = 0;
 
 var logStatement;
+
+var socket = require('socket.io-client')('http://'+config.socketHost);
 
 function arrayFind(a, f){
 	for(var i = 0; i < a.length; i++){
@@ -117,6 +122,7 @@ if(!logTableInit && !mainTableInit){
 			                var stream = this, meta = this.meta, item;
 
 							db.all("SELECT Hash FROM FeedContent WHERE IdFeed = " + feed.IdFeed, function(e2, content){
+								var nbNewArticles = 0;
 								if(e2 && isVerbose) console.log("Erreur SQL -- ", e2);
 								if(	content.length == 0) {
 									// if there is no article in the DB we download everything
@@ -130,6 +136,7 @@ if(!logTableInit && !mainTableInit){
 										var calcHash = hash.digest('hex');
 										stmt.run(feed.IdFeed, item.date, item.title, item.description, item.link, item.author, calcHash);
 										logStatement.run(feed.IdFeed, 'insert', item.date + " -- " + item.title, (new Date()).toISOString());
+										nbNewArticles++;
 					                }
 									stmt.finalize();
 									logStatement.finalize();
@@ -151,11 +158,13 @@ if(!logTableInit && !mainTableInit){
 											// if article not found, we add it
 											stmt.run(feed.IdFeed, item.date, item.title, item.description, item.link, item.author, calcHash);
 											logStatement.run(feed.IdFeed, 'insert', item.date + " -- " + item.title, (new Date()).toISOString());
+											nbNewArticles++;
 										}
 									}
 									stmt.finalize();
 									logStatement.finalize();
 								}
+								socket.emit('updateFeed', {'IdFeed': feed.IdFeed, 'NbNewArticles': nbNewArticles});
 							});
 
 			            });

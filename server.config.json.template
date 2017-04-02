@@ -4,5 +4,6 @@
     "cookieSessionKey1": "key1",
     "cookieSessionKey2": "key2",
     "webSiteUrl": "url",
-    "mailHostname": "host"
+    "mailHostname": "host",
+    "socketHost": "host:3000"
 }

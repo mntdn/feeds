@@ -1,0 +1,3 @@
+var clientConfig = {
+    "socketHost": "host:3000"
+}

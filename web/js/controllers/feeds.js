@@ -1,4 +1,4 @@
-angular.module('feedsApp').controller('feedsController', function($scope, $rootScope, $window, $document, $timeout, $http, $sce, categories) {
+angular.module('feedsApp').controller('feedsController', function($scope, $rootScope, $window, $document, $timeout, $http, $sce, categories, socket) {
 	$scope.currentUser = '';
 
 	$scope.showCollapseMenu = true; // for smartphone, collapsed menu collapsed by default
@@ -245,6 +245,16 @@ angular.module('feedsApp').controller('feedsController', function($scope, $rootS
 		return finalId === "" ? null : parseInt(finalId, 10);
 	}
 
+	socket.on('updateFeed', function(data){
+		if(data.IdFeed){
+			var i = 0;
+			for (; i < $scope.feeds.length; i++)
+				if ($scope.feeds[i].IdFeed === data.IdFeed)
+					break;
+			$scope.feeds[i].NbItems += data.NbNewArticles;
+		}
+	});
+
 	$window.onscroll = function(e) {
 		if($scope.activateMainClass === ""){
 			var currentId = $scope.getCurrentNewsItem();
@@ -307,7 +317,7 @@ angular.module('feedsApp').controller('feedsController', function($scope, $rootS
 			if(v.IdFeed === $scope.currentFeedId)
 				v.NbItems += direction;
 		});
-		if($scope.currentNewsId >= $scope.feedContent.length - 3){
+		if($scope.currentNewsId >= $scope.feedContent.length - 8){
 			$scope.feedLoad($scope.currentFeedId, false);
 		}
 	}

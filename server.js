@@ -9,6 +9,7 @@ var db = new sqlite.Database('feeds.sqlite');
 var dbLog = new sqlite.Database('feedsLog.sqlite');
 var app = express();
 var bodyParser = require('body-parser');
+var assert = require('assert');
 
 var fs = require('fs');
 var config = JSON.parse(fs.readFileSync('server.config.json', 'utf8'));
@@ -54,6 +55,11 @@ app.use(function (req, res, next) {
 
 // Tous les fichiers seront servis depuis le r�pertoire web
 app.use(express.static('web'));
+
+app.get('/socketJS', function (req, res) {
+	var socketUrl = "http://"+config.socketHost+"/socket.io/socket.io.js";
+	res.redirect(socketUrl);
+})
 
 URLWithAuth.push("getUsername");
 app.get('/getUsername', function (req, res) {

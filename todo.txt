@@ -12,3 +12,7 @@
 
 
 ++++++++ BUGS
+- Lors de l’inscription à un flux, il faut recharger la page pour l’observer
+- Il est impossible de lire un post une fois marqué comme lu
+- Sur l’organisation des feeds, un drag fait disparaitre l’ensemble des feeds de la catégorie
+- Je ne sais pas comment me désinscrire

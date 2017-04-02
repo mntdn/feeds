@@ -11,6 +11,38 @@ app.factory('categories', function($http){
 	return categories;
 });
 
+app.factory('socket', function ($rootScope, $http) {
+	var socket = typeof(io) !== 'undefined' ? io('http://' + clientConfig.socketHost) : null;
+	return {
+		on: function (eventName, callback) {
+			if(socket){
+				socket.on(eventName, function () {
+					var args = arguments;
+					$rootScope.$apply(function () {
+						callback.apply(socket, args);
+					});
+				});
+			} else {
+				return false;
+			}
+		},
+		emit: function (eventName, data, callback) {
+			if(socket){
+				socket.emit(eventName, data, function () {
+					var args = arguments;
+					$rootScope.$apply(function () {
+						if (callback) {
+							callback.apply(socket, args);
+						}
+					});
+				})
+			} else {
+				return false;
+			}
+		}
+	};
+});
+
 app.filter('orderObjectBy', function() {
 	return function(items, field, reverse) {
 		var filtered = [];

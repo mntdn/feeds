@@ -2,3 +2,5 @@ node_modules
 feeds.sqlite
 feedsLog.sqlite
 server.config.json
+web/client.config.js
+.vscode/launch.json
