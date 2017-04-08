@@ -5,8 +5,11 @@ var sqlite = require("sqlite3");
 var crypto = require('crypto');
 var db = new sqlite.Database('feeds.sqlite');
 
-const hostname = 'localhost';
-const port = 3033;
+var fs = require('fs');
+var config = JSON.parse(fs.readFileSync('server.config.json', 'utf8'));
+
+const hostname = config.feedUpdateService.split(':')[0];
+const port = parseInt(config.feedUpdateService.split(':')[1]);
 
 function arrayFind(a, f){
 	for(var i = 0; i < a.length; i++){
@@ -15,6 +18,14 @@ function arrayFind(a, f){
 	}
 	return false;
 }
+
+/*
+    The server expects a json object like this one :
+    {
+        "IdFeed": 10,
+        "Url": "http://the-witness.net/news/?feed=rss2"
+    }
+*/
 
 const server = http.createServer((req, result) => {
     result.statusCode = 200;
@@ -32,7 +43,7 @@ const server = http.createServer((req, result) => {
                 args = JSON.parse(jsonString);
             } catch(jsonErr){
                 result.end(JSON.stringify({
-                    "errCode": jsonErr,
+                    "error": jsonErr,
                     "text": "JSON parsing error"
                 }));
             }
@@ -40,7 +51,8 @@ const server = http.createServer((req, result) => {
             request(args.Url)
             .on('error', function (error) {
                 result.end(JSON.stringify({
-                    "errCode": error,
+                    "error": error,
+                    "args": args,
                     "text": "request error"
                 }));
             })
@@ -48,7 +60,8 @@ const server = http.createServer((req, result) => {
                 var streamResponse = this;
                 if (res.statusCode != 200){
                     result.end(JSON.stringify({
-                        "errCode": res,
+                        "error": res,
+                        "args": args,
                         "text": "bad response error"
                     }));
                 }
@@ -57,8 +70,9 @@ const server = http.createServer((req, result) => {
                 feedparser
                     .on('error', function(error) {
                         result.end(JSON.stringify({
-                            "errCode": error,
-                            "text": "Feed parsing error " + args.IdFeed
+                            "error": error,
+                            "args": args,
+                            "text": "Feed parsing error"
                         }));
                     })
                     .on('readable', function() {
@@ -67,7 +81,8 @@ const server = http.createServer((req, result) => {
                             var nbNewArticles = 0;
                             if(e2) {
                                 result.end(JSON.stringify({
-                                    "errCode": e2,
+                                    "error": e2,
+                                    "args": args,
                                     "text": "Erreur SQL"
                                 }));
                             }
@@ -102,9 +117,10 @@ const server = http.createServer((req, result) => {
                                 }
                                 stmt.finalize();
                             }
-                            args["newArticle"] = nbNewArticles;
+                            args["nbNewArticles"] = nbNewArticles;
                             result.end(JSON.stringify({
-                                "success": args,
+                                "success": "ok",
+                                "args": args,
                                 "text": "Feed updated"
                             }));
                         });

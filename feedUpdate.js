@@ -83,111 +83,46 @@ if(logTableInit) {
 	dbLog.close();
 }
 
-// db.all("SELECT * FROM FeedContent", function(e2, content){
-// 	if(e2) console.log("Erreur SQL -- ", e2);
-// 	var i = 0;
-// 	content.forEach(function(feed){
-// 		var hash = crypto.createHash('sha256');
-// 		hash.update(feed.Title + feed.Url);
-// 		var calcHash = hash.digest('hex');
-// 		var stmt = db.prepare("UPDATE FeedContent SET Hash = ? WHERE IdFeedContent = ?");
-// 		stmt.run(calcHash, feed.IdFeedContent);
-// 		stmt.finalize();
-// 		console.log(++i + '/' + content.length);
-// 	})
-// });
-
 if(!logTableInit && !mainTableInit){
-	db.all("SELECT * FROM Feed LIMIT 20", function(e,rows){
+	var start = process.hrtime();
+
+	var elapsed_time = function(note){
+		var precision = 3; // 3 decimal places
+		var elapsed = process.hrtime(start)[1] / 1000000; // divide by a million to get nano to milli
+		console.log(process.hrtime(start)[0] + " s, " + elapsed.toFixed(precision) + " ms - " + note); // print message + time
+		start = process.hrtime(); // reset the timer
+	}
+
+	db.all("SELECT * FROM Feed", function(e,rows){
 		if(e) throw e;
-		if(isVerbose) console.log(new Date + " update");
+		console.log(new Date + " update");
 		var nbFeedsToUpdate = rows.length;
 		rows.forEach(function(feed){
-			request(feed.Url)
-			    .on('error', function (error) {
-					updateLog(feed.IdFeed, 'Error', error.toString());
-					nbFeedsToUpdate--;
-					if(nbFeedsToUpdate === 0){
+			request.post(
+				'http://' + config.feedUpdateService,
+				{ 
+					json: {
+						"IdFeed": feed.IdFeed,
+						"Url": feed.Url
+					}
+				},
+				function (error, response, body) {
+					if (!error && response.statusCode == 200) {
+						if(body.error){
+							if(isVerbose) console.log("error", body.args.IdFeed);
+							updateLog(feed.IdFeed, 'Error', JSON.stringify(body));
+						} else {
+							if(isVerbose) console.log("success", body.args.IdFeed);							
+							updateLog(feed.IdFeed, 'Insert', JSON.stringify(body.args));
+							socket.emit('updateFeed', {'IdFeed': body.args.IdFeed, 'NbNewArticles': body.args.nbNewArticles});
+						}
+					}
+					if(--nbFeedsToUpdate === 0){
+						elapsed_time("update finished");
 						socket.disconnect();
 					}
-			    })
-			    .on('response', function (res) {
-			        var streamResponse = this;
-			        if (res.statusCode != 200){
-						nbFeedsToUpdate--;
-						if(nbFeedsToUpdate === 0){
-							socket.disconnect();
-						}
-						this.emit('error', new Error(res.statusCode));
-			        } else {
-						var feedparser = new FeedParser();
-						streamResponse.pipe(feedparser);
-						feedparser
-							.on('error', function(error) {
-								nbFeedsToUpdate--;
-								if(nbFeedsToUpdate === 0){
-									socket.disconnect();
-								}
-								updateLog(feed.IdFeed, 'Error', error.toString());
-							})
-							.on('readable', function() {
-								var stream = this, meta = this.meta, item;
-
-								db.all("SELECT Hash FROM FeedContent WHERE IdFeed = " + feed.IdFeed, function(e2, content){
-									var nbNewArticles = 0;
-									if(e2 && isVerbose) console.log("Erreur SQL -- ", e2);
-									if(	content.length == 0) {
-										// if there is no article in the DB we download everything
-										if(isVerbose) console.log(feed.IdFeed, feed.Name, " -- First download of news");
-										var stmt = db.prepare("INSERT INTO FeedContent(IdFeed, PublishedDate, Title, Content, Url, Author, Hash) VALUES (?,?,?,?,?,?,?)");
-										var logStatement = dbLog.prepare("INSERT INTO UpdateActions VALUES (?,?,?,?)");
-										while (item = stream.read()) {
-											if(isVerbose) console.log("\t" + item.date + " -- " + item.title);
-											var hash = crypto.createHash('sha256');
-											hash.update(item.title + item.link);
-											var calcHash = hash.digest('hex');
-											stmt.run(feed.IdFeed, item.date, item.title, item.description, item.link, item.author, calcHash);
-											logStatement.run(feed.IdFeed, 'insert', item.date + " -- " + item.title, (new Date()).toISOString());
-											nbNewArticles++;
-										}
-										stmt.finalize();
-										logStatement.finalize();
-									} else {
-										// first do an array of hashes
-										var hashArray = [];
-										for(var j = 0; j < content.length; j++){
-											hashArray.push(content[j].Hash);
-										}
-										// let's compare hashes found in the DB with the ones we calculate
-										if(isVerbose) console.log(feed.IdFeed, feed.Name, " -- Not up to date");
-										var stmt = db.prepare("INSERT INTO FeedContent(IdFeed, PublishedDate, Title, Content, Url, Author, Hash) VALUES (?,?,?,?,?,?,?)");
-										var logStatement = dbLog.prepare("INSERT INTO UpdateActions VALUES (?,?,?,?)");
-										while (item = stream.read()) {
-											var hash = crypto.createHash('sha256');
-											hash.update(item.title + item.link);
-											var calcHash = hash.digest('hex');
-											if(!arrayFind(hashArray, calcHash)){
-												// if article not found, we add it
-												stmt.run(feed.IdFeed, item.date, item.title, item.description, item.link, item.author, calcHash);
-												logStatement.run(feed.IdFeed, 'insert', item.date + " -- " + item.title, (new Date()).toISOString());
-												nbNewArticles++;
-											}
-										}
-										stmt.finalize();
-										logStatement.finalize();
-									}
-									nbFeedsToUpdate--;
-									if(nbFeedsToUpdate === 0){
-										socket.disconnect();
-									}
-									socket.emit('updateFeed', {'IdFeed': feed.IdFeed, 'NbNewArticles': nbNewArticles});
-								});
-
-							});
-					}
-			    });
+				}
+			);
 		});
 	});
 }
-
-// socket.disconnect();
