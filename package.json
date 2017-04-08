@@ -7,13 +7,13 @@
     "express": "^4.13.3",
     "body-parser": "^1.15.2",
     "cookie-session": "^2.0.0-alpha.1",
-    "request": "^2.76.0",
-    "feedparser": "^1.1.5",
-    "sqlite3": "^3.1.4",
+    "request": "2.81.x",
+    "feedparser": "2.1.x",
+    "sqlite3": "3.1.x",
     "xml2js": "^0.4.1",
-    "nodemailer": "^2.7.0",
-    "socket.io": "^1.7.2",
-    "socket.io-client": "^1.7.2"
+    "nodemailer": "4.0.x",
+    "socket.io": "1.7.x",
+    "socket.io-client": "1.7.x"
   },
   "devDependencies": {},
   "scripts": {

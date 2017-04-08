@@ -98,7 +98,7 @@ if(logTableInit) {
 // });
 
 if(!logTableInit && !mainTableInit){
-	db.all("SELECT * FROM Feed", function(e,rows){
+	db.all("SELECT * FROM Feed LIMIT 20", function(e,rows){
 		if(e) throw e;
 		if(isVerbose) console.log(new Date + " update");
 		var nbFeedsToUpdate = rows.length;
