@@ -590,6 +590,13 @@ angular.module('feedsApp').controller('feedsController', function($scope, $rootS
 			});
 	}
 
+	$scope.reloadSelectedFeed = function(idFeed){
+		$http.post("/updateSingleFeed?IdFeed="+idFeed)
+			.then(function(response) {
+				console.log("update done", response);
+			});
+	}
+
 	$scope.addCategory = function(){
 		categories.add($scope.categoryToAddName).then(function(response) {
 			$scope.categories.push(response.data[0]);

@@ -328,7 +328,7 @@ body{
                     background-color: black;
                 }
             }
-        }
+        }        
         .feedCard {
             display: inline-block;
             border: 1px solid lightgreen;
@@ -339,6 +339,7 @@ body{
         }
         .feedsConfigContainer {
             .feedCard {
+                vertical-align: top;
                 h5{
                     margin: -5px;
                     text-align: center;

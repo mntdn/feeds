@@ -1,0 +1,380 @@
+@font-face {
+  font-family: Roboto;
+  src: url(../fonts/Roboto-Regular.ttf);
+}
+
+@font-face {
+  font-family: Roboto;
+  src: url(../fonts/Roboto-Bold.ttf);
+  font-weight: bold;
+}
+
+@font-face {
+  font-family: Roboto;
+  src: url(../fonts/Roboto-Italic.ttf);
+  font-style: italic;
+}
+
+@font-face {
+  font-family: Roboto;
+  src: url(../fonts/Roboto-BoldItalic.ttf);
+  font-style: italic;
+  font-weight: bold;
+}
+
+body {
+  font-family: Roboto, arial;
+  margin: 0;
+}
+
+.hide {
+  display: none;
+}
+
+.ng-cloak {
+  display: none !important;
+}
+
+@media only screen and (min-width: 768px) {
+  .smartphone {
+    display: none;
+  }
+  [ng-click] {
+    cursor: pointer;
+  }
+  .topMenu {
+    position: fixed;
+    height: 30px;
+    background-color: white;
+    border-bottom: 1px solid grey;
+    width: 100%;
+  }
+  .topMenu .userPref {
+    width: 250px;
+    display: inline-block;
+    padding-top: 4px;
+    padding-left: 8px;
+  }
+  .topMenu .optionRight {
+    float: right;
+    padding-top: 4px;
+    padding-right: 8px;
+  }
+  .topMenu .controlButtons {
+    display: inline-block;
+  }
+  .topMenu .controlButtons i.button {
+    border: 1px solid grey;
+    border-radius: 4px;
+    padding: 0 8px;
+  }
+  .topMenu .controlButtons i.button:hover {
+    background-color: lightgrey;
+  }
+  .topMenu .controlButtons i.button.last {
+    margin-right: 10px;
+  }
+  .leftCol {
+    width: 250px;
+    top: 30px;
+    height: calc(100% - 16px - 30px);
+    position: fixed;
+    overflow-y: scroll;
+    padding: 8px;
+  }
+  .centerCol {
+    width: 100%;
+    height: 100%;
+    margin-top: 30px;
+    float: left;
+  }
+  .userPanel {
+    width: 100%;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid lightgrey;
+  }
+  .userPanel span.optionRight {
+    float: right;
+  }
+  .feedActionHeader {
+    position: fixed;
+    top: 33px;
+    left: calc(50% + 400px);
+  }
+  ul.feedList {
+    list-style: none;
+    padding-left: 15px;
+    margin: 5px 0;
+  }
+  ul.feedList li {
+    margin: 4px 0;
+  }
+  ul.feedList li.current {
+    font-weight: bold;
+  }
+  .feedsTotal {
+    margin-top: 10px;
+  }
+  h4 {
+    margin-bottom: 5px;
+  }
+  .feedsTotal span, h4 span {
+    display: inline-block;
+    /*padding-right: 5px;*/
+    float: right;
+  }
+  div > h4:first-of-type {
+    margin-top: 10px;
+  }
+  .feedList li a {
+    text-decoration: none;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    display: inline-block;
+    color: black;
+    width: 170px;
+  }
+  .feedList li:hover {
+    background-color: #ddd;
+    color: black;
+  }
+  .showAll {
+    padding-left: 15px;
+    font-style: italic;
+  }
+  span.nbItems {
+    display: inline-block;
+    /*padding-right: 5px;*/
+    float: right;
+  }
+  .newsItem {
+    width: 650px;
+    margin: 6px auto;
+    padding: 20px 30px 30px 30px;
+    border-radius: 4px;
+    border: 1px solid lightGrey;
+    text-align: justify;
+  }
+  .newsItem.read h2 a {
+    color: #aaa !important;
+  }
+  .currentItem {
+    border-color: black;
+  }
+  .newsItem .newsHeader {
+    display: inline-block;
+  }
+  .newsItem .newsHeader i {
+    cursor: pointer;
+  }
+  .newsItem .newsHeader h2 {
+    display: inline;
+  }
+  .newsItem .newsHeader h2 a {
+    text-decoration: none;
+    color: black;
+  }
+  .newsItem .newsHeader h3 {
+    margin: 0;
+    padding: 0;
+    font-size: 13pt;
+    font-weight: normal;
+    color: grey;
+  }
+  .newsItem .newsContent {
+    width: 100%;
+    overflow: auto;
+  }
+  .stateOn {
+    color: black !important;
+  }
+  .newsContent img, .newsContent div, .newsContent iframe {
+    max-width: 600px !important;
+    height: auto;
+    margin: 0 auto;
+  }
+  .disableInput {
+    pointer-events: none;
+    opacity: 0.4;
+  }
+  .login {
+    text-align: center;
+  }
+  .login input {
+    display: block;
+    margin: 10px auto 0 auto;
+    font-size: 24px;
+  }
+  .login button {
+    display: block;
+    margin: 10px auto 0 auto;
+    font-size: 24px;
+  }
+  .login .errorMessage {
+    color: red;
+  }
+  .setupDialog, .categoriesDialog, .addFeedsDialog {
+    width: 800px;
+    position: fixed;
+    left: calc(50% - 400px);
+    padding: 8px;
+    max-height: 600px;
+    overflow: auto;
+    background-color: white;
+    -webkit-box-shadow: 2px 2px 1px 1px #d6d6d6;
+    -moz-box-shadow: 2px 2px 1px 1px #d6d6d6;
+    box-shadow: 2px 2px 1px 1px #d6d6d6;
+  }
+  /*  ---------------------------------------------------------------
+        --
+        --                 Categories management
+        --
+        ---------------------------------------------------------------*/
+  .categoriesMenu {
+    width: calc(100% - 280px);
+    margin-left: 280px;
+  }
+  .categoriesMenu .addCategory {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .categoriesMenu .addCategory input {
+    font-size: 20px;
+  }
+  .categoriesMenu .addCategory h2 {
+    margin: 5px 0;
+  }
+  .categoriesMenu .category {
+    display: inline-block;
+    padding: 4px;
+    width: 208px;
+    border: 1px solid #FFB577;
+    border-radius: 4px;
+    margin: 6px;
+    vertical-align: top;
+  }
+  .categoriesMenu .category.noCategory {
+    width: calc(100% - 32px);
+  }
+  .categoriesMenu .category h4 {
+    margin: -5px -5px 5px -5px;
+    text-align: center;
+    background-color: #FFB577;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    padding: 5px 0;
+    font-size: 16px;
+  }
+  .categoriesMenu .category.currentCategory h4 {
+    color: #FFB577;
+    background-color: black;
+  }
+  .categoriesMenu .feedCard {
+    display: inline-block;
+    border: 1px solid lightgreen;
+    border-radius: 4px;
+    padding: 4px;
+    margin: 5px;
+    width: 190px;
+  }
+  .categoriesMenu .feedsConfigContainer .feedCard {
+    vertical-align: top;
+  }
+  .categoriesMenu .feedsConfigContainer .feedCard h5 {
+    margin: -5px;
+    text-align: center;
+    background-color: lightgreen;
+    border-radius: 4px;
+    border-radius: 4px;
+    padding: 5px 0;
+    font-size: 14px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .categoriesMenu .feedsConfigContainer .feedCard .feedDetails {
+    margin-top: 10px;
+  }
+  .categoriesMenu .feedsConfigContainer .showMore {
+    display: inline-block;
+    width: 200px;
+    margin-left: 5px;
+    margin-top: 5px;
+    vertical-align: top;
+    text-align: center;
+    background-color: #8499CA;
+    border-radius: 4px;
+    padding: 5px 0;
+    font-size: 14px;
+  }
+  /*  ---------------------------------------------------------------
+        --
+        --                 Feeds management
+        --
+        ---------------------------------------------------------------*/
+  .addFeedsMenu {
+    width: calc(100% - 280px);
+    margin-left: 280px;
+  }
+  .addFeedsMenu .searchFeeds {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .addFeedsMenu .searchFeeds input {
+    font-size: 20px;
+  }
+  .addFeedsMenu .searchFeeds h2 {
+    margin: 5px 0;
+  }
+  .addFeedsMenu .category {
+    display: inline-block;
+    padding: 4px;
+  }
+  .addFeedsMenu .feedCard {
+    display: inline-block;
+    border: 1px solid lightgrey;
+    border-radius: 4px;
+    padding: 4px;
+    margin: 5px;
+    width: 230px;
+    vertical-align: top;
+    text-align: center;
+    background-color: #D9F997;
+  }
+  .addFeedsMenu .feedCard h5 {
+    margin: -5px -5px 5px -5px;
+    text-align: center;
+    background-color: lightgreen;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    padding: 5px 0;
+    font-size: 16px;
+  }
+  .addFeedsMenu .feedCard h5 a, .addFeedsMenu .feedCard h5 a:visited {
+    color: black;
+    text-decoration: none;
+  }
+  .addFeedsMenu .windowMsgBox {
+    width: 60%;
+    background-color: white;
+    border: 1px solid black;
+    padding: 6px;
+    margin-top: 5px;
+    margin-left: 20%;
+  }
+  .addFeedsMenu .feedsConfigContainer {
+    min-height: 200px;
+  }
+  .addFeedsMenu .error {
+    color: red;
+  }
+  .dialogHead {
+    width: 100%;
+    border-bottom: 1px solid black;
+  }
+  .on-drag-hover {
+    background-color: #FFDE9C;
+  }
+}

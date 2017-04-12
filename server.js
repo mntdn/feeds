@@ -96,7 +96,11 @@ app.post('/createAccount', function (req, res) {
 		db.serialize(function() {
 			db.run("INSERT INTO User (Name, Password, Mail) VALUES ('" + req.body.name + "', '"+saltedPass+"', '"+req.body.email+"')");
 		});
-        var transporter = nodemailer.createTransport();
+        var transporter = nodemailer.createTransport({
+				port: 25,
+				host: 'localhost',
+				tls: {rejectUnauthorized: false}
+			});
         transporter.sendMail({
            from: 'feeds@' + config.mailHostname,
            to: req.body.email,
@@ -143,7 +147,11 @@ app.post('/sendPasswordMail', function (req, res) {
         crypto.pbkdf2(rows[0].Name, mailResetSalt, 100000, 512, 'sha512', function(error, key) {
             if (error) throw error;
             var saltedName = key.toString('hex');
-            var transporter = nodemailer.createTransport();
+            var transporter = nodemailer.createTransport({
+				port: 25,
+				host: 'localhost',
+				tls: {rejectUnauthorized: false}
+			});
             transporter.sendMail({
                from: 'feeds@' + config.mailHostname,
                to: req.query.mail,
@@ -333,6 +341,32 @@ app.get('/feedContent', function (req, res) {
 		LIMIT "+itemsLimit, function(e,rows){
 		if(e) throw e;
 		res.json(rows);
+	});
+})
+
+URLWithAuth.push("updateSingleFeed");
+app.post('/updateSingleFeed', function (req, res) {
+	console.log(new Date(), "updateSingleFeed POST", req.query);
+	db.all("SELECT Url FROM Feed WHERE IdFeed = " + req.query.IdFeed, function(e,rows){
+		if(e) throw e;
+		request.post(
+			'http://' + config.feedUpdateService,
+			{ 
+				json: {
+					"IdFeed": req.query.IdFeed,
+					"Url": rows[0].Url
+				}
+			},
+			function (error, response, body) {
+				if (!error && response.statusCode == 200) {
+					if(body.error){
+						res.json('Error');
+					} else {
+						res.json('Success');
+					}
+				}
+			}
+		);
 	});
 })
 
