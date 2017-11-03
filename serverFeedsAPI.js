@@ -109,6 +109,35 @@ app.post('/changeSaved', function (req, res) {
 	res.json("OK");
 })
 
+app.get('/toReadLaterList', function (req, res) {
+	console.log(new Date(), "toReadLaterList GET ", req.query);
+    var userId = 1;
+	db.all("SELECT \
+		FC.IdFeedContent, FC.Content, FC.PublishedDate, FC.Title, FC.Url, \
+		CASE WHEN UFC.IsRead IS NULL THEN 0 ELSE UFC.IsRead END IsRead, \
+		CASE WHEN UFC.IsSaved IS NULL THEN 0 ELSE UFC.IsSaved END IsSaved \
+	FROM UserFeedContent UFC \
+		INNER JOIN FeedContent FC ON FC.IdFeedContent = UFC.IdFeedContent \
+    WHERE UFC.IdUser = " + userId + " AND UFC.IsSaved = 1", function(e,rows){
+		if(e) throw e;
+		res.json(rows);
+	});
+})
+
+app.get('/toReadLaterCount', function (req, res) {
+	console.log(new Date(), "toReadLaterCount GET ", req.query);
+    var userId = 1;
+	db.all("SELECT \
+		COUNT(*) AS Nb \
+	FROM UserFeedContent UFC \
+		INNER JOIN FeedContent FC ON FC.IdFeedContent = UFC.IdFeedContent \
+	WHERE UFC.IdUser=" + userId + " AND UFC.IsSaved = 1", function(e,rows){
+		if(e) throw e;
+		res.json(rows);
+	});
+})
+
+
 var server = app.listen(8181, function () {
   var host = server.address().address
   var port = server.address().port

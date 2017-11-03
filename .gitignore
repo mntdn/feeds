@@ -4,3 +4,4 @@ feedsLog.sqlite
 server.config.json
 web/client.config.js
 .vscode/launch.json
+feeds.sqlite.back
