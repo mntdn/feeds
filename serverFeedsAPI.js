@@ -99,7 +99,7 @@ app.post('/changeRead', function (req, res) {
 
 app.post('/markAllRead', function (req, res) {
     console.log(new Date(), "markAllRead POST", req.body);
-    if(req.body.idFeed){
+    if(req.body.IdFeed){
         var userId = 1;
         db.serialize(function() {
             db.run("INSERT OR IGNORE INTO UserFeedContent (IdUser, IdFeedContent, IsRead) \
