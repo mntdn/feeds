@@ -98,16 +98,18 @@ app.post('/changeRead', function (req, res) {
 })
 
 app.post('/markAllRead', function (req, res) {
-	console.log(new Date(), "markAllRead POST", req.query);
-    var userId = 1;
-	db.serialize(function() {
-		db.run("INSERT OR IGNORE INTO UserFeedContent (IdUser, IdFeedContent, IsRead) \
-			SELECT " + userId + ", IdFeedContent, 1 \
-			FROM FeedContent WHERE IdFeed = "+ req.query.IdFeed);
-		db.run("UPDATE UserFeedContent SET IsRead = 1 \
-			WHERE IdUser = " + userId + " \
-				AND IdFeedContent IN (SELECT IdFeedContent FROM FeedContent WHERE IdFeed = '"+ req.query.IdFeed +"')");
-	});
+    console.log(new Date(), "markAllRead POST", req.query);
+    if(req.query.idFeed){
+        var userId = 1;
+        db.serialize(function() {
+            db.run("INSERT OR IGNORE INTO UserFeedContent (IdUser, IdFeedContent, IsRead) \
+                SELECT " + userId + ", IdFeedContent, 1 \
+                FROM FeedContent WHERE IdFeed = "+ req.query.IdFeed);
+            db.run("UPDATE UserFeedContent SET IsRead = 1 \
+                WHERE IdUser = " + userId + " \
+                    AND IdFeedContent IN (SELECT IdFeedContent FROM FeedContent WHERE IdFeed = '"+ req.query.IdFeed +"')");
+        });
+    }
 	res.json("OK");
 })
 
