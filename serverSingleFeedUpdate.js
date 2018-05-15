@@ -77,7 +77,7 @@ const server = http.createServer((req, result) => {
                             }
                         })
                         .on('end', function(error) {
-                            db.all("SELECT Hash FROM FeedContent WHERE IdFeed = " + args.IdFeed, function(e2, content){
+                            db.all("SELECT Hash FROM FeedContent WHERE IdFeed = " + args.IdFeed + " LIMIT 1", function(e2, content){
                                 var nbNewArticles = 0;
                                 if(e2) {
                                     result.end(JSON.stringify({
@@ -99,24 +99,20 @@ const server = http.createServer((req, result) => {
                                         }
                                         stmt.finalize();
                                     } else {
-                                        // first do an array of hashes
-                                        var hashArray = [];
-                                        for(var j = 0; j < content.length; j++){
-                                            hashArray.push(content[j].Hash);
-                                        }
-                                        // let's compare hashes found in the DB with the ones we calculate
-                                        var stmt = db.prepare("INSERT INTO FeedContent(IdFeed, PublishedDate, Title, Content, Url, Author, Hash) VALUES (?,?,?,?,?,?,?)");
+                                        var stmt = db.prepare("\
+                                            INSERT INTO FeedContent(IdFeed, PublishedDate, Title, Content, Url, Author, Hash) \
+                                            SELECT ?,?,?,?,?,?,?\
+                                            FROM FeedContent\
+                                            WHERE  NOT EXISTS (SELECT hash FROM feedcontent WHERE hash = ?)\
+                                            LIMIT 1"
+                                        );
                                         for(var i = 0; i < feedArray.length; i++) {
                                             var item = feedArray[i];
                                             var hash = crypto.createHash('sha256');
                                             hash.update(item.title + item.link);
                                             var calcHash = hash.digest('hex');
-                                            if(!arrayFind(hashArray, calcHash)){
-                                                // if article not found, we add it
-                                                stmt.run(args.IdFeed, item.date, item.title, item.description, item.link, item.author, calcHash);
-                                                hashArray.push(calcHash); // we add it to the hash reference so that we won't add the same article again if it's twice in the list by error
-                                                nbNewArticles++;
-                                            }
+                                            stmt.run(args.IdFeed, item.date, item.title, item.description, item.link, item.author, calcHash, calcHash);
+                                            nbNewArticles++;
                                         }
                                         stmt.finalize();
                                     }
