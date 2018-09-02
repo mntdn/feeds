@@ -38,7 +38,9 @@ app.post('/', function (req, res) {
     var args = req.body;
     var reqRss = request(args.Url)
     var feedparser = new FeedParser();
+    var isError = false;
     reqRss.on('error', function (error) {
+        isError = true;
         res.json({
             "error": error,
             "args": args,
@@ -47,6 +49,8 @@ app.post('/', function (req, res) {
     });
 
     reqRss.on('response', function (resRss) {
+        if(isError)
+            return;
         var s = this; // `this` is `req`, which is a stream
 
         if (resRss.statusCode !== 200) {
@@ -57,9 +61,10 @@ app.post('/', function (req, res) {
         }
     });
     var feedArray = [];
-    var isError = false;
     feedparser
         .on('error', function (error) {
+            if(isError)
+                return;
             isError = true;
             res.json({
                 "error": error,
@@ -68,6 +73,8 @@ app.post('/', function (req, res) {
             });
         })
         .on('readable', function () {
+            if(isError)
+                return;
             var stream = this, meta = this.meta, item;
             while (item = stream.read()) {
                 feedArray.push(item);
