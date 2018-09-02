@@ -141,12 +141,13 @@ app.post('/checkLogin', function (req, res) {
 
 app.post('/sendPasswordMail', function (req, res) {
     console.log(new Date(), "sendPasswordMail POST ", req.query);
-    db.all("SELECT Name FROM User WHERE Mail = '" + req.query.mail + "'", function(e,rows){
+    db.all("SELECT Name FROM User WHERE Mail = '" + req.query.mail + "' LIMIT 1", function(e,rows){
 		if(e) throw e;
         console.log(rows);
         crypto.pbkdf2(rows[0].Name, mailResetSalt, 100000, 512, 'sha512', function(error, key) {
             if (error) throw error;
             var saltedName = key.toString('hex');
+            console.log(saltedName);
             var transporter = nodemailer.createTransport({
 				port: 25,
 				host: 'localhost',

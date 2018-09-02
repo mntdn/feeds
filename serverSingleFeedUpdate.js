@@ -1,3 +1,5 @@
+var express = require('express');
+var bodyParser = require('body-parser');
 const http = require('http');
 var FeedParser = require('feedparser');
 var request = require('request');
@@ -11,12 +13,12 @@ var config = JSON.parse(fs.readFileSync('server.config.json', 'utf8'));
 const hostname = config.feedUpdateService.split(':')[0];
 const port = parseInt(config.feedUpdateService.split(':')[1]);
 
-function arrayFind(a, f){
-	for(var i = 0; i < a.length; i++){
-		if(a[i] === f)
-			return true;
-	}
-	return false;
+function arrayFind(a, f) {
+    for (var i = 0; i < a.length; i++) {
+        if (a[i] === f)
+            return true;
+    }
+    return false;
 }
 
 /*
@@ -27,6 +29,107 @@ function arrayFind(a, f){
     }
 */
 
+const app = express()
+app.use(bodyParser.json());
+
+app.post('/', function (req, res) {
+    console.log(new Date(), "Feed Get ", req.body);
+    // var streamResponse = this;
+    var args = req.body;
+    var reqRss = request(args.Url)
+    var feedparser = new FeedParser();
+    reqRss.on('error', function (error) {
+        res.json({
+            "error": error,
+            "args": args,
+            "text": "Feed URL error"
+        });
+    });
+
+    reqRss.on('response', function (resRss) {
+        var s = this; // `this` is `req`, which is a stream
+
+        if (resRss.statusCode !== 200) {
+            this.emit('error', new Error('Bad status code'));
+        }
+        else {
+            s.pipe(feedparser);
+        }
+    });
+    var feedArray = [];
+    var isError = false;
+    feedparser
+        .on('error', function (error) {
+            isError = true;
+            res.json({
+                "error": error,
+                "args": args,
+                "text": "Feed parsing error"
+            });
+        })
+        .on('readable', function () {
+            var stream = this, meta = this.meta, item;
+            while (item = stream.read()) {
+                feedArray.push(item);
+            }
+        })
+        .on('end', function (error) {
+            if (!isError) {
+                db.all("SELECT Hash FROM FeedContent WHERE IdFeed = " + args.IdFeed + " LIMIT 1", function (e2, content) {
+                    var nbNewArticles = 0;
+                    if (e2) {
+                        res.json({
+                            "error": e2,
+                            "args": args,
+                            "text": "Erreur SQL"
+                        });
+                    } else {
+                        if (content.length == 0) {
+                            // if there is no article in the DB we download everything
+                            var stmt = db.prepare("INSERT INTO FeedContent(IdFeed, PublishedDate, Title, Content, Url, Author, Hash) VALUES (?,?,?,?,?,?,?)");
+                            for (var i = 0; i < feedArray.length; i++) {
+                                var item = feedArray[i];
+                                var hash = crypto.createHash('sha256');
+                                hash.update(item.title + item.link);
+                                var calcHash = hash.digest('hex');
+                                stmt.run(args.IdFeed, item.date, item.title, item.description, item.link, item.author, calcHash);
+                                nbNewArticles++;
+                            }
+                            stmt.finalize();
+                        } else {
+                            var stmt = db.prepare("\
+                                INSERT INTO FeedContent(IdFeed, PublishedDate, Title, Content, Url, Author, Hash) \
+                                SELECT ?,?,?,?,?,?,?\
+                                FROM FeedContent\
+                                WHERE  NOT EXISTS (SELECT hash FROM feedcontent WHERE hash = ?)\
+                                LIMIT 1"
+                            );
+                            for (var i = 0; i < feedArray.length; i++) {
+                                var item = feedArray[i];
+                                var hash = crypto.createHash('sha256');
+                                hash.update(item.title + item.link);
+                                var calcHash = hash.digest('hex');
+                                stmt.run(args.IdFeed, item.date, item.title, item.description, item.link, item.author, calcHash, calcHash);
+                                nbNewArticles++;
+                            }
+                            stmt.finalize();
+                        }
+                        args["nbNewArticles"] = nbNewArticles;
+                        res.json({
+                            "success": "ok",
+                            "args": args,
+                            "text": "Feed updated"
+                        });
+                    }
+                });
+            }
+        });
+});
+
+app.listen(port, hostname, () => {
+    console.log(`Server running at http://${hostname}:${port}/`);
+})
+/*
 const server = http.createServer((req, result) => {
     result.statusCode = 200;
     result.setHeader('Content-Type', 'application/json');
@@ -139,3 +242,4 @@ const server = http.createServer((req, result) => {
 server.listen(port, hostname, () => {
   console.log(`Server running at http://${hostname}:${port}/`);
 });
+*/
