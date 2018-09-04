@@ -6,5 +6,6 @@
     "webSiteUrl": "url",
     "mailHostname": "host",
     "socketHost": "host:3000",
-    "feedUpdateService": "host:3033"
+    "feedUpdateService": "host:3033",
+    "errorMailTo": "m@m.com"
 }

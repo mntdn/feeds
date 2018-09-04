@@ -53,6 +53,25 @@ app.use(function (req, res, next) {
   }
 })
 
+app.use(function (err, req, res, next) {
+    console.log("Error !!", err);
+    if(err.severity == errors.high){
+        var transporter = nodemailer.createTransport({
+            port: 25,
+            host: 'localhost',
+            tls: {rejectUnauthorized: false}
+        });
+        transporter.sendMail({
+            from: 'feeds@' + config.mailHostname,
+            to: config.errorMailTo,
+            subject: 'Critical error in Feeds',
+            text: `Voici l'erreur : ${err}`
+        });
+    }
+    if(!err.isOperational)
+        next(err);
+});
+
 // Tous les fichiers seront servis depuis le r�pertoire web
 app.use(express.static('web'));
 
