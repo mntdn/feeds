@@ -2,6 +2,7 @@ var FeedParser = require('feedparser');
 var request = require('request');
 var sqlite = require("sqlite3");
 var crypto = require('crypto');
+var async = require("async");
 
 var fs = require('fs');
 
@@ -91,38 +92,44 @@ if(!logTableInit && !mainTableInit){
 		var elapsed = process.hrtime(start)[1] / 1000000; // divide by a million to get nano to milli
 		console.log(process.hrtime(start)[0] + " s, " + elapsed.toFixed(precision) + " ms - " + note); // print message + time
 		start = process.hrtime(); // reset the timer
-	}
+    }
+    
+    var q = async.queue(function(feed, callback) {
+        request.post(
+            'http://' + config.feedUpdateService,
+            { 
+                json: {
+                    "IdFeed": feed.IdFeed,
+                    "Url": feed.Url
+                }
+            },
+            (error, response, body) => {
+                if (!error && response.statusCode == 200) {
+                    if(body.error){
+                        if(isVerbose) console.log("error", body.args.IdFeed);
+                        updateLog(feed.IdFeed, 'Error', JSON.stringify(body));
+                    } else {
+                        if(isVerbose) console.log("success", body.args.IdFeed);							
+                        updateLog(feed.IdFeed, 'Insert', JSON.stringify(body.args));
+                        // socket.emit('updateFeed', {'IdFeed': body.args.IdFeed, 'NbNewArticles': body.args.nbNewArticles});
+                    }
+                }
+                callback();
+            }
+        );
+    }, 4);
+
+    q.drain = function(){
+        elapsed_time("update finished");
+    }
 
 	db.all("SELECT * FROM Feed", function(e,rows){
 		if(e) throw e;
 		console.log(new Date + " update");
-		var nbFeedsToUpdate = rows.length;
 		rows.forEach(function(feed){
-			request.post(
-				'http://' + config.feedUpdateService,
-				{ 
-					json: {
-						"IdFeed": feed.IdFeed,
-						"Url": feed.Url
-					}
-				},
-				function (error, response, body) {
-					if (!error && response.statusCode == 200) {
-						if(body.error){
-							if(isVerbose) console.log("error", body.args.IdFeed);
-							updateLog(feed.IdFeed, 'Error', JSON.stringify(body));
-						} else {
-							if(isVerbose) console.log("success", body.args.IdFeed);							
-							updateLog(feed.IdFeed, 'Insert', JSON.stringify(body.args));
-							socket.emit('updateFeed', {'IdFeed': body.args.IdFeed, 'NbNewArticles': body.args.nbNewArticles});
-						}
-					}
-					if(--nbFeedsToUpdate === 0){
-						elapsed_time("update finished");
-						socket.disconnect();
-					}
-				}
-			);
+			q.push(feed, () => {
+                console.log(feed.Url + " finished");
+            });
 		});
 	});
 }

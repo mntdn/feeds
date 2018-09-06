@@ -13,7 +13,8 @@
     "xml2js": "^0.4.1",
     "nodemailer": "4.0.x",
     "socket.io": "1.7.x",
-    "socket.io-client": "1.7.x"
+    "socket.io-client": "1.7.x",
+    "async": "^2.6.1"
   },
   "devDependencies": {},
   "scripts": {
