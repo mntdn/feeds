@@ -121,9 +121,10 @@ if(!logTableInit && !mainTableInit){
 
     q.drain = function(){
         elapsed_time("update finished");
+        process.exit();
     }
 
-	db.all("SELECT * FROM Feed", function(e,rows){
+	db.all("SELECT * FROM Feed LIMIT 4", function(e,rows){
 		if(e) throw e;
 		console.log(new Date + " update");
 		rows.forEach(function(feed){
